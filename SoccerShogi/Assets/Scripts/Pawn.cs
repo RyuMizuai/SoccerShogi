@@ -15,26 +15,26 @@ public class Pawn : Piece   // •à•º
         posY = pos.y;
     }
 
-    public override void CalculateMovePos(List<Vector2Int> pointList)
+    public override void CalculateMovePos(List<Vector2Int> pointPosList)
     {
         if (!isPromoted)
         {
             int a = 90;
-            CalculateXY(a, pointList);
+            CalculateXY(a, pointPosList);
         }
         else
         {
             int[] i = { 0, 45, 90, 135, 180, 270 };
             foreach (int a in i)
             {
-                CalculateXY(a, pointList);
+                CalculateXY(a, pointPosList);
             }
         }
     }
 
-    public override void CalculateDribblePos(List<Vector2Int> pointList)
+    public override void CalculateDribblePos(List<Vector2Int> pointPosList)
     {
-        CalculateMovePos(pointList);
+        CalculateMovePos(pointPosList);
     }
 
     public override Vector2 GetPieceStandPos()

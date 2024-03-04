@@ -15,17 +15,17 @@ public class King : Piece   // â§è´
         posY = pos.y;
     }
 
-    public override void CalculateMovePos(List<Vector2Int> pointList)
+    public override void CalculateMovePos(List<Vector2Int> pointPosList)
     {
-        for (int a = 0; a < 360; a = a + 45)
+        for (int a = 0; a < 360; a += 45)
         {
-            CalculateXY(a, pointList);
+            CalculateXY(a, pointPosList);
         }
     }
 
-    public override void CalculateDribblePos(List<Vector2Int> pointList)
+    public override void CalculateDribblePos(List<Vector2Int> pointPosList)
     {
-        CalculateMovePos(pointList);
+        CalculateMovePos(pointPosList);
     }
 
     public override Vector2 GetPieceStandPos()

@@ -15,16 +15,16 @@ public class Rook : Piece   // 飛車
         posY = pos.y;
     }
 
-    public override void CalculateMovePos(List<Vector2Int> pointList)
+    public override void CalculateMovePos(List<Vector2Int> pointPosList)
     {
         for (int a = 0; a < 360; a += 90)
         {
             for (int d = 1; d <= boardRight - boardLeft; d++)
             {
-                CalculateXY(a, d, pointList);
-                if (pointList.Count == 0) continue; // 動けるマスがなければスキップ
+                CalculateXY(a, d, pointPosList);
+                if (pointPosList.Count == 0) continue; // 動けるマスがなければスキップ
 
-                Vector2Int v = pointList[pointList.Count - 1];  // 最後に追加された座標
+                Vector2Int v = pointPosList[^1];  // 最後に追加された座標
                 // 駒かボールがあればそこでストップ
                 if (PieceExistsAtPos(v).Item1 || gameManager.BallExistsAtPos(v))
                 { 
@@ -36,22 +36,22 @@ public class Rook : Piece   // 飛車
         {
             for (int a = 45; a < 360; a += 90)
             {
-                CalculateXY(a, pointList);
+                CalculateXY(a, pointPosList);
             }
         }
     }
 
-    public override void CalculateDribblePos(List<Vector2Int> pointList)
+    public override void CalculateDribblePos(List<Vector2Int> pointPosList)
     {
         for (int a = 0; a < 360; a += 90)
         {
-            CalculateXY(a,pointList);    
+            CalculateXY(a,pointPosList);    
         }
         if (isPromoted)
         {
             for (int a = 45; a < 360; a += 90)
             {
-                CalculateXY(a, pointList);
+                CalculateXY(a, pointPosList);
             }
         }
     }

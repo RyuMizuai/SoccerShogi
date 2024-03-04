@@ -13,7 +13,7 @@ public class GameManager : MonoBehaviour
     public static readonly int boardBottom = 1;   // 下端
     public static readonly int boardTop = 9;      // 上端
 
-    private readonly float epsilon = 0.0001f; // 小さい数
+    private static readonly float epsilon = 0.0001f; // 小さい数
 
     public static string gameState = "";    // ゲームの状態
     public static string nowPlayer = "";    // 今のプレイヤー
@@ -24,8 +24,8 @@ public class GameManager : MonoBehaviour
     public static bool isPassing = false; // パス中か
     public static bool isDribbling = false; // ドリブル中か
 
-    public static List<GameObject> piecesInCheck = new List<GameObject>();      // 王手をしている駒
-    public static List<Vector2Int> intersectingPos = new List<Vector2Int>();    // 合駒の座標
+    public static List<GameObject> pieceInCheckList = new List<GameObject>();   // 王手をしている駒
+    public static List<Vector2Int> intersectingPosList = new List<Vector2Int>();// 合駒の座標
 
     public static string inCheckPlayer = "";    // 王手をしているプレーヤー
     public static string nowSceneName = "";     // 現在のシーン名
@@ -37,22 +37,19 @@ public class GameManager : MonoBehaviour
     private GameObject actionButtonPanel;   // アクションボタンパネル
 
     [SerializeField]
-    private GameObject firstPlayerKingObj;       // 先手玉のオブジェクト
+    private GameObject firstPlayerKingObj;  // 先手玉のオブジェクト
 
     [SerializeField]
-    private GameObject secondPlayerKingObj;        // 後手玉のオブジェクト
+    private GameObject secondPlayerKingObj; // 後手玉のオブジェクト
 
     public GameObject ballObject;           // サッカーボールのオブジェクト
     public GameObject pointPrefab;          // PointのPrefab
 
-    private readonly string firstPlayerLayer = "FirstPlayer";  // FirstPlayerレイヤー
-    private readonly string secondPlayerLayer = "SecondPlayer";    // SecondPlayerレイヤー
-    private string pieceTag = "Piece";      // Pieceタグ
+    private readonly string firstPlayerLayer = "FirstPlayer";   // FirstPlayerレイヤー
+    private readonly string secondPlayerLayer = "SecondPlayer"; // SecondPlayerレイヤー
+    private string pieceTag = "Piece";                          // Pieceタグ
 
     private GameObject[] pieces;            // すべての駒のゲームオブジェクト
-
-    [System.NonSerialized]
-    public bool isCalledFromInCheck = false;    // IsCheckから呼ばれたか(要改善)
 
     public static GameManager gameManager;  // GameManagerの入れ物
 
@@ -83,7 +80,6 @@ public class GameManager : MonoBehaviour
         Vector3 newPos = objPosition - axisPos;         // 平行移動後の座標
         Vector3 v = objRotation * newPos;               // 回転後の座標
         return new Vector2(v.x, v.y) + axisPos;         // もう一度平行移動
-
     }
 
     // 持ち駒の数を画面に表示する
@@ -144,10 +140,12 @@ public class GameManager : MonoBehaviour
     {
         CancelAction(ClickObject.selectingPiece); // クリック中の駒のアクションを初期化
         isPassing = true;   // パス中
+        BallController.CalculatePassPos();      // パスの範囲を更新
 
+        // パスの範囲を表示
         foreach (Vector2Int passPos in BallController.passPosList)
         {
-            Instantiate(pointPrefab, new Vector3(passPos.x, passPos.y), Quaternion.identity); // PointのPrefabを作成
+            Instantiate(pointPrefab, (Vector2)passPos, Quaternion.identity); // PointのPrefabを作成
         }
     }
 
@@ -157,9 +155,10 @@ public class GameManager : MonoBehaviour
         CancelAction(ClickObject.selectingPiece); // クリック中の駒のアクションを初期化
         isDribbling = true; // ドリブル中        
 
+        // ドリブルの範囲を表示
         foreach (Vector2Int dribblePos in BallController.dribblePosList)
         {
-            Instantiate(pointPrefab, new Vector3(dribblePos.x, dribblePos.y), Quaternion.identity); // PointのPrefabを作成
+            Instantiate(pointPrefab, (Vector2)dribblePos, Quaternion.identity); // PointのPrefabを作成
         }
     }
 
@@ -169,8 +168,10 @@ public class GameManager : MonoBehaviour
         // フラグを下ろす
         isPassing = false;
         isDribbling = false;
+
         // 駒とボールの座標を元の位置に戻す
         obj.transform.position = ClickObject.selectingPiecePos;
+
         // 保持されている場合
         if (ballObject.transform.root.gameObject != ballObject)
         {
@@ -206,11 +207,11 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(nowSceneName);   // 現在のシーンを読み込む
     }
 
-
     // 入力されたプレーヤーが王手をしているかどうか判定する
     public bool IsCheck(string playerName)
     {
         inCheckPlayer = "Default"; // 王手中のプレイヤーを初期化
+
         // 相手玉のオブジェクト
         GameObject kingObj = GetOpponentKingObject(playerName);
 
@@ -218,18 +219,17 @@ public class GameManager : MonoBehaviour
         {
             string pieceLayer = LayerMask.LayerToName(piece.layer);
             PieceController pc = piece.GetComponent<PieceController>();
-            // 入力されたプレイヤーの駒で盤上のものを取得
-            if (!pc.IsInHand() && pieceLayer == playerName)
+
+            // 持ち駒または別プレイヤーの駒のときスキップ
+            if (pc.IsInHand() || pieceLayer != playerName) continue;
+
+            foreach (Vector2Int pointPos in pc.pointPosList)
             {
-                for (int i = 0; i < pc.pointList.Count; i++)
+                // Pointと相手の王の座標が一致したときtrueを返す
+                if (TwoPositionsEquals(kingObj.transform.position, pointPos))
                 {
-                    Vector3 v = new Vector3(pc.pointList[i].x, pc.pointList[i].y);
-                    // Pointの座標のいずれかが相手の王と一致したときtrueを返す
-                    if (Vector3.SqrMagnitude(kingObj.transform.position - v) < epsilon)
-                    {
-                        inCheckPlayer = playerName; // 王手中のプレイヤー
-                        return true;
-                    }
+                    inCheckPlayer = playerName; // 王手中のプレイヤーを保持
+                    return true;
                 }
             }
         }
@@ -239,7 +239,8 @@ public class GameManager : MonoBehaviour
     // 王手をしている駒を返す
     private List<GameObject> GetPiecesInCheck()
     {
-        List<GameObject> obj = new List<GameObject>();
+        List<GameObject> objList = new List<GameObject>();
+
         // 王手されているプレイヤーの玉
         GameObject kingObj = GetOpponentKingObject(inCheckPlayer);
 
@@ -247,43 +248,46 @@ public class GameManager : MonoBehaviour
         {
             string pieceLayer = LayerMask.LayerToName(piece.layer);
             PieceController pc = piece.GetComponent<PieceController>();
-            // 王手中のプレイヤーの駒で盤上のものを取得
-            if (!pc.IsInHand() && pieceLayer == inCheckPlayer)
+
+            // 持ち駒であるか，王手中のプレイヤーの駒でないときスキップ
+            if (pc.IsInHand() || pieceLayer != inCheckPlayer) continue;
+            
+            foreach (Vector2 pointPos in pc.pointPosList)
             {
-                for (int i = 0; i < pc.pointList.Count; i++)
+                // Pointと相手の王の座標が一致したとき
+                if (TwoPositionsEquals(kingObj.transform.position, pointPos))
                 {
-                    Vector3 v = new Vector3(pc.pointList[i].x, pc.pointList[i].y);
-                    // Pointの座標のいずれかが相手の王と一致したとき
-                    if (Vector3.SqrMagnitude(kingObj.transform.position - v) < epsilon)
-                    {
-                        // List追加
-                        obj.Add(pc.gameObject);
-                    }
+                    // List追加
+                    objList.Add(pc.gameObject);
                 }
             }
         }
-        return obj;
+        return objList;
     }
 
     // 合駒の座標を計算する
     private List<Vector2Int> GetIntersectingPos()
     {
         List<Vector2Int> vec = new List<Vector2Int>();
+
         // 王手されているプレイヤーの玉
         GameObject kingObj = GetOpponentKingObject(inCheckPlayer);
-        
-        foreach (GameObject pieceInCheck in piecesInCheck)  //王手中の駒
+
+        // 両王手の場合は合駒が利かないため
+        // 王手をしている駒が1つの場合のみ合駒の座標を計算
+        if (pieceInCheckList.Count == 1)
         {
+            GameObject pieceInCheck = pieceInCheckList[0];  // 王手をしている駒
+
             // 王手中の駒と王の間に王手中の駒のPointがあれば合駒List追加
             PieceController pc = pieceInCheck.GetComponent<PieceController>();
-            for (int i = 0; i < pc.pointList.Count; i++)
-            {
-                Vector2Int v = pc.pointList[i];
 
+            foreach (Vector2Int pointPos in pc.pointPosList)
+            {
                 // 王手中の駒のPointが王手中の駒と王の内分点かどうか
-                if (IsInternalDivision(pieceInCheck.transform.position, kingObj.transform.position, v))
+                if (IsInternalDivision(pieceInCheck.transform.position, kingObj.transform.position,pointPos))
                 {
-                    vec.Add(v); // 合駒List追加
+                    vec.Add(pointPos); // 合駒List追加
                 }
             }
         }
@@ -299,23 +303,24 @@ public class GameManager : MonoBehaviour
         float tx = Mathf.InverseLerp(v.x, v2.x, v3.x);  // x方向の内分点
         float ty = Mathf.InverseLerp(v.y, v2.y, v3.y);  // y方向の内分点
 
-        // 縦方向のとき
-        if (Mathf.Approximately(v.x, v2.x))
+        // 王手をしている駒と王の位置関係によって処理を変える
+
+        // 縦方向のとき 3点x座標が同じ
+        if (Mathf.Approximately(v.x, v2.x) && Mathf.Approximately(v.x, v3.x))
         {
-            bool equal = Mathf.Approximately(v.x, v3.x);    // 3点x座標が同じか
-            return equal && 0 < ty && ty < 1;                  // 内分しているか
+            return 0 < ty && ty < 1;    // 内分しているか
         }
-        // 横方向のとき
-        else if (Mathf.Approximately(v.y, v2.y))
+
+        // 横方向のとき 3点y座標が同じ
+        else if (Mathf.Approximately(v.y, v2.y) && Mathf.Approximately(v.y, v3.y))
         {
-            bool equal = Mathf.Approximately(v.y, v3.y);    // 3点y座標が同じか
-            return equal && 0 < tx && tx < 1;                  // 内分しているか
+            return 0 < tx && tx < 1;    // 内分しているか
         }
         // 斜めのとき
         else
         {
             bool equal = Mathf.Approximately(tx, ty);   // v3がvとv2を結んだ直線上にあるか→tx=tyかどうか
-            return equal && 0 < tx && tx < 1;              // 内分しているか(tyでもいい)
+            return equal && 0 < tx && tx < 1;           // 内分しているか(tyでもいい)
         }
     }
 
@@ -346,7 +351,7 @@ public class GameManager : MonoBehaviour
             {
                 // 相手のすべての駒が動けなかったら自分の勝ち
                 PieceController pc = piece.GetComponent<PieceController>();
-                if (pc.pointList.Count != 0)
+                if (pc.pointPosList.Count != 0)
                 {
                     return false;   // Pointが１つでもあればfalse
                 }
@@ -364,32 +369,43 @@ public class GameManager : MonoBehaviour
         ClickObject.selectingPiece = null;
         ClickObject.oldSelectingPiece = null;
 
-        piecesInCheck.Clear();  // 王手中の駒を初期化
+        // 王手関係のListを初期化
+        pieceInCheckList.Clear();
+        intersectingPosList.Clear();
 
-        // bcを取得
-        BallController bc = ballObject.GetComponent<BallController>();
-        bc.CalculateDribblePos();   // ドリブルの範囲を更新
-        bc.CalculatePassPos();      // パスの範囲を更新
+        BallController.CalculateDribblePos();   // ドリブルの範囲を更新
 
-        // 王手チェック
-        if (isInCheck = IsCheck(nowPlayer))
+        // 自分の駒のPoint更新
+        foreach (GameObject piece in pieces)
         {
-            piecesInCheck = GetPiecesInCheck();     // 王手中の駒
-            intersectingPos = GetIntersectingPos(); // 合駒の座標
+            if (LayerMask.LayerToName(piece.layer) == nowPlayer)
+            {
+                PieceController pc = piece.GetComponent<PieceController>();
+                // 動ける位置を更新する
+                pc.CalculatePointPos(pc.pointPosList);
+            }
         }
 
-        // 相手駒のPointの更新
+        isInCheck = IsCheck(nowPlayer); // 王手情報更新
+
+        // 王手チェック
+        if (isInCheck)
+        {
+            pieceInCheckList = GetPiecesInCheck();     // 王手中の駒
+            intersectingPosList = GetIntersectingPos(); // 合駒の座標
+        }
+
+        // 相手の駒のPoint更新
         foreach (GameObject piece in pieces)
         {
             if (LayerMask.LayerToName(piece.layer) != nowPlayer)
             {
                 PieceController pc = piece.GetComponent<PieceController>();
                 // 動ける位置を更新する
-                pc.CalculatePointPos(pc.pointList);
-                
+                pc.CalculatePointPos(pc.pointPosList);
             }
         }
-        
+
 
         // 詰みチェック
         if (isInCheck)
@@ -456,24 +472,22 @@ public class GameManager : MonoBehaviour
     }
 
     // サッカーボールのオブジェクトと座標が一致したらtrueを返す
-    public bool BallExistsAtPos(Vector2Int v)
+    public bool BallExistsAtPos(Vector2 v)
     {
-        return Vector3.SqrMagnitude(ballObject.transform.position - (Vector3Int)v) < epsilon;
+        return TwoPositionsEquals(ballObject.transform.position, v);
     }
 
     // 受け取った座標がゴール位置か判定する
     public bool GoalExistsAtPos(Vector2Int v)
     {
-        foreach(Vector2Int goalPos in goalPosList)
-        {
-            if (Vector3.SqrMagnitude(ballObject.transform.position - (Vector3Int)v) < epsilon)
-            {
-                return true;
-            }
-        }
-        return false;
+        return goalPosList.Contains(v);
     }
 
+    // 2つの座標が等しいか判定する
+    public static bool TwoPositionsEquals(Vector2 v1, Vector2 v2)
+    {
+        return Vector2.SqrMagnitude(v1 - v2) < epsilon;
+    }
     
 }
 

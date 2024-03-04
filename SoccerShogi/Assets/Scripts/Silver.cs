@@ -15,14 +15,14 @@ public class Silver : Piece  // ã‚è´
         posY = pos.y;
     }
 
-    public override void CalculateMovePos(List<Vector2Int> pointList)
+    public override void CalculateMovePos(List<Vector2Int> pointPosList)
     {
         if (!isPromoted)
         {
             int[] i = { 45, 90, 135, 225, 325 };
             foreach (int a in i)
             {
-                CalculateXY(a, pointList);
+                CalculateXY(a, pointPosList);
             }
         }
         else
@@ -30,14 +30,14 @@ public class Silver : Piece  // ã‚è´
             int[] i = { 0, 45, 90, 135, 180, 270 };
             foreach (int a in i)
             {
-                CalculateXY(a, pointList);
+                CalculateXY(a, pointPosList);
             }
         }
     }
 
-    public override void CalculateDribblePos(List<Vector2Int> pointList)
+    public override void CalculateDribblePos(List<Vector2Int> pointPosList)
     {
-        CalculateMovePos(pointList);
+        CalculateMovePos(pointPosList);
     }
 
     public override Vector2 GetPieceStandPos()

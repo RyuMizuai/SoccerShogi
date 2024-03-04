@@ -11,20 +11,23 @@ public class BallController : MonoBehaviour
 
     public static readonly Vector2 ballLocalPos = new Vector2(0, 0.25f);// 駒に対するボールの位置
     public static Vector2 ballWorldPos;                                 // ボールの絶対位置
+    static GameObject ballObject;
 
     private void Start()
     {
         ballWorldPos = transform.position;
+        ballObject = this.gameObject;
     }
 
     // ドリブルで動ける座標を計算する
-    public void CalculateDribblePos()
+    public static void CalculateDribblePos()
     {
-        dribblePosList.Clear();
-        if (transform.root.gameObject != gameObject)
+        dribblePosList.Clear(); // Listを初期化
+
+        if (ballObject.transform.parent != null)
         {
             // 親がいる場合(保持されている場合)
-            GameObject parentPiece = transform.root.gameObject; // 親の駒のオブジェクト
+            GameObject parentPiece = ballObject.transform.root.gameObject; // 親の駒のオブジェクト
             Piece piece = parentPiece.GetComponent<Piece>();
             PieceController pc = parentPiece.GetComponent<PieceController>();
             piece.Set(parentPiece.transform.position);
@@ -34,13 +37,14 @@ public class BallController : MonoBehaviour
     }
 
     // パス可能な座標を計算する
-    public void CalculatePassPos()
+    public static void CalculatePassPos()
     {
-        passPosList.Clear();
-        if (transform.root.gameObject != gameObject)
+        passPosList.Clear();    // Listを初期化
+
+        if (ballObject.transform.parent != null)
         {
             // 親がいる場合(保持されている場合)
-            GameObject parentPiece = transform.root.gameObject; // 親の駒のオブジェクト
+            GameObject parentPiece = ballObject.transform.root.gameObject; // 親の駒のオブジェクト
             Piece piece = parentPiece.GetComponent<Piece>();
             PieceController pc = parentPiece.GetComponent<PieceController>();
             piece.Set(parentPiece.transform.position);
