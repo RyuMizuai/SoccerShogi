@@ -36,8 +36,6 @@ public abstract class Piece : MonoBehaviour
     [System.NonSerialized]
     public bool isHoldingBall = false; // ボールを持っているか
 
-    private readonly float epsilon = 0.0001f; // 小さい数
-
     protected GameManager gameManager;    // GameManager
 
     private void Awake()
@@ -70,10 +68,10 @@ public abstract class Piece : MonoBehaviour
     abstract public void Set(Vector2 pos);
 
     // 駒が動ける座標を計算する
-    abstract public void CalculateMovePos(List<Vector2Int> pointList);
+    abstract public void CalculateMovePos(List<Vector2Int> pointPosList);
 
     // ドリブルで動ける座標を計算する
-    abstract public void CalculateDribblePos(List<Vector2Int> pointList);
+    abstract public void CalculateDribblePos(List<Vector2Int> pointPosList);
 
     // 駒台の座標を返す
     abstract public Vector2 GetPieceStandPos();
@@ -97,7 +95,7 @@ public abstract class Piece : MonoBehaviour
             if (piece == this.gameObject) continue; // 自身と同じならスキップ
 
             // 座標が一致したらtrueと駒のオブジェクトを返す
-            if (Vector3.SqrMagnitude(piece.transform.position - (Vector3Int)v) < epsilon)
+            if (GameManager.TwoPositionsEquals(piece.transform.position, v))
             {
                 return (true, piece);
             }
@@ -106,21 +104,21 @@ public abstract class Piece : MonoBehaviour
     }
 
     // 入力された角度と距離をもとに，駒が動けるマスの座標を計算する
-    protected void CalculateXY(float a, float d, List<Vector2Int> pointList)
+    protected void CalculateXY(float a, float d, List<Vector2Int> pointPosList)
     {
         float x = Mathf.Round(posX + d * Mathf.Cos(a * Mathf.Deg2Rad)); // x座標
         float y = Mathf.Round(posY + d * Mathf.Sin(a * Mathf.Deg2Rad)); // y座標
         // 動く範囲を向いている方向に合わせる
         Vector2 v = GameManager.RotateCoordinate(new Vector2(x, y), transform.rotation, transform.position);
-        pointList.Add(new Vector2Int(Mathf.RoundToInt(v.x), Mathf.RoundToInt(v.y)));
+        pointPosList.Add(new Vector2Int(Mathf.RoundToInt(v.x), Mathf.RoundToInt(v.y)));
     }
 
-    protected void CalculateXY(float a, List<Vector2Int> pointList)
+    protected void CalculateXY(float a, List<Vector2Int> pointPosList)
     {
         float x = Mathf.Round(posX + Mathf.Cos(a * Mathf.Deg2Rad));
         float y = Mathf.Round(posY + Mathf.Sin(a * Mathf.Deg2Rad));
         Vector2 v = GameManager.RotateCoordinate(new Vector2(x, y), transform.rotation, transform.position);
-        pointList.Add(new Vector2Int(Mathf.RoundToInt(v.x), Mathf.RoundToInt(v.y)));
+        pointPosList.Add(new Vector2Int(Mathf.RoundToInt(v.x), Mathf.RoundToInt(v.y)));
     }
 
     public void SetPieceStand()

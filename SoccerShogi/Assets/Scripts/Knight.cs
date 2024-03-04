@@ -15,18 +15,19 @@ public class Knight : Piece // Œj”n
         posY = pos.y;
     }
 
-    public override void CalculateMovePos(List<Vector2Int> pointList)
+    public override void CalculateMovePos(List<Vector2Int> pointPosList)
     {
         if (!isPromoted)
         {
-            float[] x = new float[2] { posX + 1, posX - 1 };
-            float[] y = new float[2] { posY + 2, posY + 2 };
-            for (int i = 0; i < x.Length; i++)
+            Vector2[] vArray = new Vector2[]{ new Vector2(posX + 1, posY + 2), 
+                new Vector2(posX - 1, posY + 2) };
+
+            foreach (Vector2 vInt in vArray)
             {
-                Vector2 v = GameManager.RotateCoordinate(new Vector2(x[i], y[i]), transform.rotation, transform.position);
+                Vector2 v = GameManager.RotateCoordinate(vInt, transform.rotation, transform.position);
                 int vx = Mathf.RoundToInt(v.x);
                 int vy = Mathf.RoundToInt(v.y);
-                pointList.Add(new Vector2Int(vx, vy));
+                pointPosList.Add(new Vector2Int(vx, vy));
             }
         }
         else
@@ -34,14 +35,14 @@ public class Knight : Piece // Œj”n
             int[] i = { 0, 45, 90, 135, 180, 270 };
             foreach (int a in i)
             {
-                CalculateXY(a, pointList);
+                CalculateXY(a, pointPosList);
             }
         }
     }
 
-    public override void CalculateDribblePos(List<Vector2Int> pointList)
+    public override void CalculateDribblePos(List<Vector2Int> pointPosList)
     {
-        CalculateMovePos(pointList);
+        CalculateMovePos(pointPosList);
     }
 
     public override Vector2 GetPieceStandPos()

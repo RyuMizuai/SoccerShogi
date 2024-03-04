@@ -14,17 +14,17 @@ public class Lance : Piece  // 香車
         posX = pos.x;
         posY = pos.y;
     }
-    public override void CalculateMovePos(List<Vector2Int> pointList)
+    public override void CalculateMovePos(List<Vector2Int> pointPosList)
     {
         if (!isPromoted)
         {
             int a = 90;
             for (int d = 1; d <= boardTop - boardBottom; d++)
             {
-                CalculateXY(a, d, pointList);
-                if (pointList.Count == 0) continue; // 動けるマスがなければスキップ
+                CalculateXY(a, d, pointPosList);
+                if (pointPosList.Count == 0) continue; // 動けるマスがなければスキップ
 
-                Vector2Int v = pointList[pointList.Count - 1];  // 最後に追加された座標
+                Vector2Int v = pointPosList[^1];  // 最後に追加された座標
                 // 駒かボールがあればそこでストップ
                 if (PieceExistsAtPos(v).Item1 || gameManager.BallExistsAtPos(v))
                 {
@@ -37,24 +37,24 @@ public class Lance : Piece  // 香車
             int[] i = { 0, 45, 90, 135, 180, 270 };
             foreach (int a in i)
             {
-                CalculateXY(a, pointList);
+                CalculateXY(a, pointPosList);
             }
         }
     }
 
-    public override void CalculateDribblePos(List<Vector2Int> pointList)
+    public override void CalculateDribblePos(List<Vector2Int> pointPosList)
     {
         if (!isPromoted)
         {
             int a = 90;
-            CalculateXY(a, pointList);
+            CalculateXY(a, pointPosList);
         }
         else
         {
             int[] i = { 0, 45, 90, 135, 180, 270 };
             foreach (int a in i)
             {
-                CalculateXY(a, pointList);
+                CalculateXY(a, pointPosList);
             }
         }
     }

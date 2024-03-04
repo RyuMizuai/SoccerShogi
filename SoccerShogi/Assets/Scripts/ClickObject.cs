@@ -74,7 +74,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
     // クリック
     public void OnPointerClick(PointerEventData eventData)
     {
-        GameObject obj = eventData.pointerPress;
+        GameObject obj = eventData.pointerPress;    // クリックされたオブジェクト
         
         // プレイ中
         if (GameManager.gameState == "Playing")
@@ -104,6 +104,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                 // 駒，またはボールを移動させる
                 PieceController pc = selectingPiece.GetComponent<PieceController>();
                 Piece piece = selectingPiece.GetComponent<Piece>();
+
                 // ボール保持中の場合
                 if (piece.isHoldingBall)
                 {
@@ -146,6 +147,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                         pc.MovePiece(obj.transform.position); // 駒をpointまで動かす
                     }
                 }
+
                 DeselectPiece(selectingPiece);                          // 選択解除
                 DeleteAllPoints();                                      // point削除
                 selectingPiecePos = selectingPiece.transform.position;  // 駒の位置を保持
@@ -204,12 +206,16 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
     {
         if (LayerMask.LayerToName(obj.layer) == GameManager.nowPlayer)
         {
+            // プレイヤーの駒の場合
             // 駒を選択，または選択解除する
+
             oldSelectingPiece = selectingPiece; // 後のために保持
             selectingPiece = obj;               // クリックされた駒のオブジェクト
             PieceController pc = selectingPiece.GetComponent<PieceController>();
+
             if (pc == null)
             {
+                Debug.Log("Error");
                 return;
             }
 
@@ -229,6 +235,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                 {
                     CancelOperation(oldSelectingPiece);  // 前の駒の選択解除
                 }
+
                 SelectPiece(selectingPiece);                            // 選択
                 selectingPiecePos = selectingPiece.transform.position;  // 位置を保持
                 Piece piece = selectingPiece.GetComponent<Piece>();
@@ -243,9 +250,9 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                 // ボールを持っていない場合，通常の移動範囲を表示
                 else
                 {
-                    for (int i = 0; i < pc.pointList.Count; i++)
+                    foreach (Vector2Int pointPos in pc.pointPosList)
                     {
-                        Instantiate(gameManager.pointPrefab, (Vector3Int)pc.pointList[i], Quaternion.identity); // PointのPrefabを作成
+                        Instantiate(gameManager.pointPrefab, (Vector2)pointPos, Quaternion.identity); // PointのPrefabを作成
                     }
                 }
             }
