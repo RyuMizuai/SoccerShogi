@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 
 public class GameManager : MonoBehaviour
@@ -34,6 +35,12 @@ public class GameManager : MonoBehaviour
     private GameObject promoteButtonPanel;  // 成るボタンパネル
 
     [SerializeField]
+    private Image promotedPieceImage;       // 成るボタンに表示する画像
+
+    [SerializeField]
+    private Image notPromotedPieceImage;    // 成らないボタンに表示する画像
+
+    [SerializeField]
     private GameObject actionButtonPanel;   // アクションボタンパネル
 
     [SerializeField]
@@ -42,7 +49,10 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private GameObject secondPlayerKingObj; // 後手玉のオブジェクト
 
-    public GameObject ballObject;           // サッカーボールのオブジェクト
+    [SerializeField]
+    private TMP_Text messageText;           // ゲーム終了後のメッセージのText
+
+    private GameObject ballObject;          // サッカーボールのオブジェクト
     public GameObject pointPrefab;          // PointのPrefab
 
     private readonly string firstPlayerLayer = "FirstPlayer";   // FirstPlayerレイヤー
@@ -53,18 +63,17 @@ public class GameManager : MonoBehaviour
 
     public static GameManager gameManager;  // GameManagerの入れ物
 
-    public Text messageText;                // ゲーム終了後のメッセージのText
-
     public static List<Vector2Int> goalPosList = new List<Vector2Int>(); // ゴールの位置
 
     private void Awake()
     {
-        gameManager = this;
+        gameManager = this;    // static変数に自分を保存する
     }
 
     private void Start()
     {
         pieces = GameObject.FindGameObjectsWithTag(pieceTag);
+        ballObject = BallController.ballObject;
         promoteButtonPanel.SetActive(false);                // ボタン非表示
         actionButtonPanel.SetActive(false);                 // ボタン非表示
         messageText.gameObject.SetActive(false);            // Text非表示
@@ -83,8 +92,9 @@ public class GameManager : MonoBehaviour
     }
 
     // 持ち駒の数を画面に表示する
-    public static void DisplayPieceCount(Piece piece)
+    public static void DisplayPieceCount(GameObject pieceObj)
     {
+        Piece piece = pieceObj.GetComponent<Piece>();
         int count = piece.GetCount();                           // 持ち駒の数
         GameObject textObj = piece.GetCountText();              // 持ち駒の数のText
         textObj.transform.rotation = piece.transform.rotation;  // Textを駒と同じ向きにする
@@ -94,10 +104,10 @@ public class GameManager : MonoBehaviour
         {
             Quaternion pieceRotation = piece.transform.rotation;
             Vector2 piecePos = RotateCoordinate(piece.GetPieceStandPos(), pieceRotation, centerPos);    // 駒の座標
-            Vector2 pos = RotateCoordinate(new Vector2(0.25f, 0.2f), pieceRotation, new Vector2(0.0f, 0.0f)); // 駒からのずれ
+            Vector2 pos = RotateCoordinate(new Vector2(0.35f, 0.3f), pieceRotation, new Vector2(0.0f, 0.0f)); // 駒からのずれ
             Vector2 textPos = piecePos + pos;   // Textの座標
             textObj.transform.position = textPos;
-            textObj.GetComponent<Text>().text = count.ToString();
+            textObj.GetComponent<TMP_Text>().text = count.ToString();
             textObj.SetActive(true);    // 表示
         }
         // 持ち駒が0個か1個のとき非表示
@@ -115,23 +125,25 @@ public class GameManager : MonoBehaviour
         piece.GetComponent<SpriteRenderer>().sprite = piece.promotedPieceSprite; // 画像を差し替える
         promoteButtonPanel.SetActive(false);    // ボタン非表示
         isSelectingPromotion = false;           // フラグを下ろす
-        ClickObject.selectingPiece = null;      // 操作終了
         isButtonClicked = true;                 // ボタンクリックフラグオン
     }
     
     // 成らずボタン
     public void NotPromotePieceButton()
     {
-       // ボタンを消すだけ
+        // ボタンを消すだけ
         promoteButtonPanel.SetActive(false);    // ボタン非表示
         isSelectingPromotion = false;           // フラグを下ろす
-        ClickObject.selectingPiece = null;      // 操作終了
         isButtonClicked = true;                 // ボタンクリックフラグオン
     }
 
     // 成るボタンを表示する
     public void ActivePromoteButton()
     {
+        Piece piece = ClickObject.selectingPiece.GetComponent<Piece>(); // 選択中の駒のPieceを取得
+        // ボタンに表示する画像を選択中の駒のものに差し替える
+        promotedPieceImage.sprite = piece.promotedPieceSprite;
+        notPromotedPieceImage.sprite = piece.pieceSprite;
         promoteButtonPanel.SetActive(true);
     }
 
@@ -153,12 +165,13 @@ public class GameManager : MonoBehaviour
     public void DribbleButton()
     {
         CancelAction(ClickObject.selectingPiece); // クリック中の駒のアクションを初期化
-        isDribbling = true; // ドリブル中        
-
+        isDribbling = true; // ドリブル中
+        PieceController pc = BallController.pieceHoldingBall.GetComponent<PieceController>();
+        Debug.Log(BallController.pieceHoldingBall);
         // ドリブルの範囲を表示
-        foreach (Vector2Int dribblePos in BallController.dribblePosList)
+        foreach (Vector2Int pointPos in pc.pointPosList)
         {
-            Instantiate(pointPrefab, (Vector2)dribblePos, Quaternion.identity); // PointのPrefabを作成
+            Instantiate(pointPrefab, (Vector2)pointPos, Quaternion.identity); // PointのPrefabを作成
         }
     }
 
@@ -173,7 +186,7 @@ public class GameManager : MonoBehaviour
         obj.transform.position = ClickObject.selectingPiecePos;
 
         // 保持されている場合
-        if (ballObject.transform.root.gameObject != ballObject)
+        if (BallController.pieceHoldingBall != null)
         {
             // ボールを駒の少し上に配置
             ballObject.transform.localPosition = BallController.ballLocalPos;
@@ -192,7 +205,7 @@ public class GameManager : MonoBehaviour
     // パスボタンとドリブルボタンを表示する
     public void ActiveActionButton()
     {
-        actionButtonPanel.SetActive(true);
+        actionButtonPanel.SetActive(true);  // ボタン表示
     }
 
     // パスボタンとドリブルボタンを非表示にする
@@ -382,7 +395,7 @@ public class GameManager : MonoBehaviour
             {
                 PieceController pc = piece.GetComponent<PieceController>();
                 // 動ける位置を更新する
-                pc.CalculatePointPos(pc.pointPosList);
+                pc.CalculatePointPos();
             }
         }
 
@@ -391,7 +404,7 @@ public class GameManager : MonoBehaviour
         // 王手チェック
         if (isInCheck)
         {
-            pieceInCheckList = GetPiecesInCheck();     // 王手中の駒
+            pieceInCheckList = GetPiecesInCheck();      // 王手中の駒
             intersectingPosList = GetIntersectingPos(); // 合駒の座標
         }
 
@@ -402,7 +415,7 @@ public class GameManager : MonoBehaviour
             {
                 PieceController pc = piece.GetComponent<PieceController>();
                 // 動ける位置を更新する
-                pc.CalculatePointPos(pc.pointPosList);
+                pc.CalculatePointPos();
             }
         }
 
@@ -442,15 +455,8 @@ public class GameManager : MonoBehaviour
         gameState = "GameEnd";  // ゲーム終了
 
         // 勝ったプレイヤーに応じてメッセージをTextに出力
-        string message;
-        if (winningPlayer == firstPlayerLayer)
-        {
-            message = "You Win!";
-        }
-        else
-        {
-            message = "You Lose!";
-        }
+        string message = (winningPlayer == firstPlayerLayer) ? "あなたの勝ち！" : "あなたの負け!";
+        
         messageText.text = message;
         messageText.gameObject.SetActive(true);
 

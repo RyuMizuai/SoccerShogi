@@ -33,10 +33,6 @@ public abstract class Piece : MonoBehaviour
     [System.NonSerialized]
     public bool isPromoted = false; // ¬‚Á‚Ä‚¢‚é‚©
 
-    [System.NonSerialized]
-    public bool isHoldingBall = false; // ƒ{[ƒ‹‚ğ‚Á‚Ä‚¢‚é‚©
-
-    protected GameManager gameManager;    // GameManager
 
     private void Awake()
     {
@@ -50,7 +46,6 @@ public abstract class Piece : MonoBehaviour
 
     private void Start()
     {
-        gameManager = GameManager.gameManager;
         pieces = GameObject.FindGameObjectsWithTag(pieceTag);
         SetPieceStand();
         StartCoroutine(Coroutine());

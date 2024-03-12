@@ -20,7 +20,6 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
     public static GameObject selectingPiece = null;     // 選択している駒のオブジェクト
     public static GameObject oldSelectingPiece = null;  // 前に選択していた駒のオブジェクト
     public static Vector2 selectingPiecePos;
-    private static Piece selectingPieceScript;
 
     private GameManager gameManager;    // GameManagerの入れ物
 
@@ -38,7 +37,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
     private void Start()
     {
         gameManager = GameManager.gameManager;
-        ballObject = gameManager.ballObject;
+        ballObject = BallController.ballObject;
     }
 
     private void Update()
@@ -55,7 +54,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                 //if (pos.x > boardLeft - 0.5 && pos.x < boardRight + 0.5 && pos.y > boardBottom - 0.5 && pos.y < boardTop + 0.5)
                 //{
                     // ボールを持っていないか，ドリブル中の場合
-                    if (!selectingPieceScript.isHoldingBall || GameManager.isDribbling)
+                    if (BallController.pieceHoldingBall != gameObject || GameManager.isDribbling)
                     {
                         // 選択中の駒をカーソル移動させる
                         transform.position = pos;
@@ -64,7 +63,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                     else if (GameManager.isPassing)
                     {
                         // ボールをカーソル移動させる
-                        gameManager.ballObject.transform.position = pos;
+                        ballObject.transform.position = pos;
                     }
                 //}
             }
@@ -93,9 +92,9 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                     CancelOperation(selectingPiece); // 選択解除
                 }
                 // 親がいる場合(つまりボールが保持中クリックした場合)
-                else if (transform.root.gameObject != null)
+                else if (BallController.pieceHoldingBall != null)
                 {
-                    ClickPiece(transform.root.gameObject);  // 親の駒をクリック
+                    ClickPiece(BallController.pieceHoldingBall);  // 親の駒をクリック
                 }
             }
             // Pointの場合
@@ -106,7 +105,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                 Piece piece = selectingPiece.GetComponent<Piece>();
 
                 // ボール保持中の場合
-                if (piece.isHoldingBall)
+                if (BallController.pieceHoldingBall == selectingPiece)
                 {
                     // パス
                     if (GameManager.isPassing)
@@ -116,8 +115,8 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                         int posY = Mathf.RoundToInt(obj.transform.position.y);
                         Vector2Int newBallPos = new Vector2Int(posX, posY);
                         ballObject.transform.position = (Vector2)newBallPos;
-                        piece.isHoldingBall = false;    // ボール保持オフ
-                        GameManager.isPassing = false;  // パス中オフ
+                        BallController.pieceHoldingBall = null; // ボール保持をnull
+                        GameManager.isPassing = false;          // パス中オフ
 
                         // 移動先に駒がある場合ボールを保持させる
                         if (piece.PieceExistsAtPos(newBallPos).Item1)
@@ -125,7 +124,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                             GameObject pieceObj = piece.PieceExistsAtPos(newBallPos).Item2;
                             ballObject.transform.SetParent(pieceObj.transform);                 // 駒の子にする
                             ballObject.transform.localPosition = BallController.ballLocalPos;   // ボールの位置を駒に対して少しずらす
-                            pieceObj.GetComponent<Piece>().isHoldingBall = true;                // ボール保持をtrueにする
+                            BallController.pieceHoldingBall = pieceObj;                         // ボール保持
 
                         }
                     }
@@ -152,7 +151,6 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                 DeleteAllPoints();                                      // point削除
                 selectingPiecePos = selectingPiece.transform.position;  // 駒の位置を保持
                 BallController.ballWorldPos = ballObject.transform.position;  // ボールの位置を保持
-                selectingPieceScript = null;
 
 
                 // ターン終了
@@ -222,7 +220,15 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
             // 選択中の駒をもう一度クリックした場合
             if (isSelecting)
             {
-                CancelOperation(selectingPiece); // 選択解除
+                // 持ち駒を選択していた場合
+                if (pc.IsInHand())
+                {
+                    // 一時的に減らした持ち駒数の表示を戻す
+                    selectingPiece.GetComponent<Piece>().CountUp();
+                    GameManager.DisplayPieceCount(selectingPiece);   // 駒のカウントを表示
+                }
+
+                CancelOperation(selectingPiece); // 操作解除
                 // 選択中の駒関連をnullにする
                 selectingPiece = null;
                 oldSelectingPiece = null;
@@ -238,11 +244,9 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
 
                 SelectPiece(selectingPiece);                            // 選択
                 selectingPiecePos = selectingPiece.transform.position;  // 位置を保持
-                Piece piece = selectingPiece.GetComponent<Piece>();
-                selectingPieceScript = piece;                           // Pieceスクリプトを保持
 
                 // ボールを持っている場合
-                if (piece.isHoldingBall)
+                if (BallController.pieceHoldingBall == selectingPiece)
                 {
                     // ボタンを表示
                     gameManager.ActiveActionButton();
@@ -254,6 +258,14 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                     {
                         Instantiate(gameManager.pointPrefab, (Vector2)pointPos, Quaternion.identity); // PointのPrefabを作成
                     }
+                }
+
+                // 持ち駒を選択した場合
+                if (pc.IsInHand())
+                {
+                    // 一時的に持ち駒数の表示を減らす
+                    selectingPiece.GetComponent<Piece>().CountDown();
+                    GameManager.DisplayPieceCount(selectingPiece);   // 駒のカウントを表示
                 }
             }
         }

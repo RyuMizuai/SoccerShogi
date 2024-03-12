@@ -79,10 +79,10 @@ public class PieceController : MonoBehaviour
         pieceScale = transform.lossyScale;
         pieces = GameObject.FindGameObjectsWithTag(pieceTag);
         thisLayer = LayerMask.LayerToName(this.gameObject.layer);
+        ballObject = BallController.ballObject;
         piece.Set(transform.position); // 駒の初期設定
         StartCoroutine(Coroutine()); // 全ての駒の初期設定が終わるのを待つために時間差で呼び出す
         oldPos = transform.position;
-        ballObject = gameManager.ballObject;
     }
 
     private IEnumerator Coroutine()
@@ -91,20 +91,21 @@ public class PieceController : MonoBehaviour
         // 先手駒の更新
         if (thisLayer == GameManager.nowPlayer)
         {
-            CalculatePointPos(pointPosList);
+            CalculatePointPos();
         }
     }
 
     // Point(駒が動けるマス)の座標を計算する
-    public void CalculatePointPos(List<Vector2Int> pointPosList)
+    public void CalculatePointPos()
     {
         pointPosList.Clear(); // Listの初期化
         thisLayer = LayerMask.LayerToName(gameObject.layer);    // Layer変数の更新
         // ボールを保持している場合
-        if (ballObject.transform.IsChildOf(this.transform))
+        if (BallController.pieceHoldingBall == gameObject)
         {
             // ドリブルの範囲を格納
-            this.pointPosList = new List<Vector2Int>(BallController.dribblePosList);
+            pointPosList = new List<Vector2Int>(BallController.dribblePosList);
+            RemoveNotMovablePos(pointPosList);     // 動かせないマスは削除
         }
 
         // 駒が盤上にある場合
@@ -138,7 +139,8 @@ public class PieceController : MonoBehaviour
             }
             // 王手でないとき
             // 置けないマスはスキップ
-            else {
+            else
+            {
                 // 駒がないマスの座標を取得
                 for (int i = boardLeft; i <= boardRight; i++)
                 {
@@ -224,6 +226,7 @@ public class PieceController : MonoBehaviour
                     }
                 }
             }
+
             // 取った駒を持ち駒にする
             if (piece.PieceExistsAtPos(newPosInt).Item1)
             {
@@ -231,7 +234,6 @@ public class PieceController : MonoBehaviour
                 Piece objPiece = obj.GetComponent<Piece>();                 // 取った駒のPieceクラス
 
                 obj.transform.DetachChildren();                             // 子を削除
-                objPiece.isHoldingBall = false;                             // ボール保持をfalseにする
                 obj.GetComponent<PieceController>().DemotePiece();          // 成状態を解除
                 obj.transform.rotation *= Quaternion.Euler(0, 0, 180);      // 駒の向きを反転
 
@@ -241,39 +243,39 @@ public class PieceController : MonoBehaviour
                 string objLayer = LayerMask.LayerToName(obj.layer);         // 取った駒のlayer
                 if (objLayer == secondPlayerLayer)
                 {
-                    obj.layer = LayerMask.NameToLayer(firstPlayerLayer);         // レイヤーを変更
+                    obj.layer = LayerMask.NameToLayer(firstPlayerLayer);    // レイヤーを変更
                     obj.transform.SetParent(firstPlayerStand.transform);    // 駒台の子にする
                 }
                 else if (objLayer == firstPlayerLayer)
                 {
-                    obj.layer = LayerMask.NameToLayer(secondPlayerLayer);          // レイヤーを変更
-                    obj.transform.SetParent(secondPlayerStand.transform);     // 駒台の子にする
+                    obj.layer = LayerMask.NameToLayer(secondPlayerLayer);   // レイヤーを変更
+                    obj.transform.SetParent(secondPlayerStand.transform);   // 駒台の子にする
                 }
-                objPiece.SetPieceStand();   // 駒台のコンポーネントをセットし直す
 
-                objPiece.CountUp();                         // 駒のカウントを増やす
-                GameManager.DisplayPieceCount(objPiece);    // 駒のカウントを表示
+                objPiece.SetPieceStand();           // 駒台のコンポーネントをセットし直す
+                objPiece.CountUp();                 // 駒のカウントを増やす
+                GameManager.DisplayPieceCount(obj); // 駒のカウントを表示
 
                 // ボールの座標を丸める
                 float posX = Mathf.Round(ballObject.transform.position.x);
                 float posY = Mathf.Round(ballObject.transform.position.y);
                 ballObject.transform.position = new Vector2(posX, posY);
             }
+
             // ボールがあれば保持
             if (gameManager.BallExistsAtPos(newPosInt))
             {
                 ballObject.transform.SetParent(gameObject.transform);               // 駒の子にする
                 ballObject.transform.localPosition = BallController.ballLocalPos;   // ボールの位置を駒に対して少しずらす
-                piece.isHoldingBall = true;                                         // ボール保持をtrueにする
-                pointPosList = new List<Vector2Int>(BallController.dribblePosList);    // ドリブルの範囲を格納
+                BallController.pieceHoldingBall = gameObject;                       // ボール保持
             }
         }
-        // 持ち駒を置いた場合，親をnullにする
+        // 持ち駒を置いた場合
         else
         {
-            piece.CountDown();          // カウントを減らす
-            transform.SetParent(null);  // 親をnullにする
-            GameManager.DisplayPieceCount(piece);   // 駒のカウントを表示
+            piece.CountDown();                          // カウントを減らす
+            transform.SetParent(null);                  // 親をnullにする
+            GameManager.DisplayPieceCount(gameObject);  // 駒のカウントを表示
 
             // 打ち歩詰めか判定
             if (pieceType == PieceType.pawn)
@@ -296,8 +298,9 @@ public class PieceController : MonoBehaviour
                     gameManager.GameOver(winningPlayer);    // ゲーム終了
                 }
             }
-            
         }
+
+        SoundManager.soundManager.MakeMotionSound();    // 効果音を鳴らす
 
         // positionとscaleを整数に直す
         transform.position = (Vector3Int)newPosInt;
@@ -373,17 +376,18 @@ public class PieceController : MonoBehaviour
     // 移動不可能なマスを削除する
     public void RemoveNotMovablePos(List<Vector2Int> pointPosList)
     {
-        List<Vector2Int> newPointPosList = new List<Vector2Int>(pointPosList);    // 値渡しで保持
+        List<Vector2Int> removePosList = new List<Vector2Int>();    // 削除するマスのList
+
         // 移動不可能なら座標を削除
-        foreach (Vector2Int pointPos in newPointPosList)
+        foreach (Vector2Int pointPos in pointPosList)
         {
+            // 盤の外側のとき
             if (pointPos.x < boardLeft || pointPos.x > boardRight || pointPos.y < boardBottom || pointPos.y > boardTop)
             {
-                // 盤の外側のとき
+                // ゴールでないまたはパス中でない場合
                 if (!gameManager.GoalExistsAtPos(pointPos) || !GameManager.isPassing)
                 {
-                    // ゴールでないまたはパス中でない場合除外する
-                    pointPosList.Remove(pointPos); // 削除
+                    removePosList.Add(pointPos); // List追加
                     continue;
                 }
             }
@@ -400,7 +404,7 @@ public class PieceController : MonoBehaviour
                     // 敵の駒ならパスできない
                     if (LayerMask.LayerToName(obj.layer) != thisLayer)
                     {
-                        pointList.Remove(pointPos); // 削除
+                        removePosList.Add(pointPos); // List追加
                         continue;
                     }
                 }*/
@@ -411,16 +415,16 @@ public class PieceController : MonoBehaviour
                     // 合駒ができる場合
                     if (GameManager.intersectingPosList.Count > 0)
                     {
-                        // 合駒の座標にパスの座標が含まれていなければパスListから削除
+                        // 合駒の座標にパスの座標が含まれていない場合
                         if (!GameManager.intersectingPosList.Contains(pointPos))
                         {
-                            pointPosList.Remove(pointPos); // 削除
+                            removePosList.Add(pointPos);// List追加
                         }
                     }
-                    // それ以外の場合は合駒ができないため削除
+                    // 合駒ができない場合
                     else
                     {
-                        pointPosList.Remove(pointPos); // 削除
+                        removePosList.Add(pointPos);    // List追加
                     }
 
                 }
@@ -437,14 +441,14 @@ public class PieceController : MonoBehaviour
                     // 味方の駒ならと同じ位置なら座標Listから削除
                     if (LayerMask.LayerToName(obj.layer) == thisLayer)
                     {
-                        pointPosList.Remove(pointPos); // 削除
+                        removePosList.Add(pointPos); // List追加
                         continue;
                     }
                 }
 
                 if (!isNowUpdate) // 更新中の場合は再帰回避のためスキップ
                 {
-                    
+
                     // 動かすと詰みならその位置には動かせない
 
                     // 動かすと詰みかどうか
@@ -471,7 +475,7 @@ public class PieceController : MonoBehaviour
                         UpdateMoving(secondPlayerLayer);
                         if (gameManager.IsCheck(secondPlayerLayer))
                         {
-                            pointPosList.Remove(pointPos);
+                            removePosList.Add(pointPos);    // List追加
                         }
                     }
                     else if (thisLayer == secondPlayerLayer)
@@ -479,7 +483,7 @@ public class PieceController : MonoBehaviour
                         UpdateMoving(firstPlayerLayer);
                         if (gameManager.IsCheck(firstPlayerLayer))
                         {
-                            pointPosList.Remove(pointPos);
+                            removePosList.Add(pointPos);    // List追加
                         }
                     }
                     // 仮に取った駒のレイヤーと自身の座標を元に戻す
@@ -491,11 +495,18 @@ public class PieceController : MonoBehaviour
                 }
             }
         }
+
+        foreach (Vector2Int removePos in removePosList)
+        {
+            pointPosList.Remove(removePos);
+        }
     }
 
     // 入力されたプレーヤーの駒の動きを更新する
     public void UpdateMoving(string playerName)
     {
+        BallController.CalculateDribblePos();   // ドリブルの範囲を更新
+
         foreach (GameObject piece in pieces)
         {
             string pieceLayer = LayerMask.LayerToName(piece.layer);
@@ -506,8 +517,7 @@ public class PieceController : MonoBehaviour
 
             // プレイヤーの駒のPointを更新
             pc.isNowUpdate = true;   // 改善点(更新中フラグ)
-            BallController.CalculateDribblePos();   // ドリブルの範囲を更新
-            pc.CalculatePointPos(pc.pointPosList);
+            pc.CalculatePointPos();
             pc.isNowUpdate = false;
         }
     }

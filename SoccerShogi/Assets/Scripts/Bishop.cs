@@ -26,7 +26,7 @@ public class Bishop : Piece // 角行
 
                 Vector2Int v = pointPosList[^1];  // 最後に追加された座標
                 // 駒かボールがあればそこでストップ
-                if (PieceExistsAtPos(v).Item1 || gameManager.BallExistsAtPos(v))
+                if (PieceExistsAtPos(v).Item1 || GameManager.gameManager.BallExistsAtPos(v))
                 {
                     break;
                 }
