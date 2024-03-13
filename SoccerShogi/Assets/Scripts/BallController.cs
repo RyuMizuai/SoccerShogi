@@ -11,7 +11,7 @@ public class BallController : MonoBehaviour
 
     public static readonly Vector2 ballLocalPos = new Vector2(0, 0.25f);// 駒に対するボールの位置
     public static Vector2 ballWorldPos;                                 // ボールの絶対位置
-    public static readonly Vector2 initialBallPos = new Vector2(5, 8);  // ボールの初期位置
+    public static Vector2 initialBallPos;                      // ボールの初期位置
 
     public static GameObject ballObject;        // ボールのオブジェクト
     public static GameObject pieceHoldingBall;  // ボールを保持している駒のオブジェクト
@@ -24,9 +24,22 @@ public class BallController : MonoBehaviour
 
     private void Start()
     {
+        StartCoroutine(SetBall());
+        pieceHoldingBall = null;
+    }
+
+    private IEnumerator SetBall()
+    {
+        // GameManagerの初期化完了まで待つ
+        yield return new WaitUntil(() => GameManager.isFinishInitialize);
+
+        // ボールの位置を初期化
+        float x = Mathf.Round(BoardManager.centerPos.x);
+        float y = Mathf.Round(BoardManager.centerPos.y);
+        //initialBallPos = new Vector2(x, y - 1);
+        initialBallPos = new Vector2(5, 8);
         transform.position = initialBallPos;
         ballWorldPos = transform.position;
-        pieceHoldingBall = null;
     }
 
     // ドリブルで動ける座標を計算する

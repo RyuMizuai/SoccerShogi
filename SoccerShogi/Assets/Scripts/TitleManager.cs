@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 public class TitleManager : MonoBehaviour
 {
     static string startScene = "StartScene";
-    static string allCoatScene = "9_9";
+    static string allCoatScene = "AllCoat";
     string harfCoatScene = "";
     static string endScene = "EndScene";
 

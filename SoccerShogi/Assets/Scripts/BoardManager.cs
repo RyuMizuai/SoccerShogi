@@ -4,10 +4,15 @@ using UnityEngine;
 
 public class BoardManager : MonoBehaviour
 {
-    private int boardWidth;     // 幅
-    private int boardHeight;    // 高さ
-    private float boardTop;
-    private float boardBottom;
+    public static int boardWidth;       // 幅
+    public static int boardHeight;      // 高さ
+
+    public static int boardLeft = 1;    // 左端
+    public static int boardRight;       // 右端
+    public static int boardBottom = 1;  // 下端
+    public static int boardTop;         // 上端
+
+    public static Vector2 centerPos;    // 盤の中心の座標
 
     [SerializeField]
     private GameObject tilePrefab;      // タイルのPrefab
@@ -19,67 +24,114 @@ public class BoardManager : MonoBehaviour
     [SerializeField]
     List<GameObject> prefabPieces;
 
-    // 駒の初期配置
-    int[,] boardSetting =
+    // 駒の初期配置(9*9)
+    private readonly int[,] boardSetting_1 =
     {
         {2, 0, 1, 0, 0, 0, 11, 0, 12},
-        {3, 6, 1, 0, 0, 0, 11,16, 13},
+        {3, 6, 1, 0, 0, 0, 11,17, 13},
         {4, 0, 1, 0, 0, 0, 11, 0, 14},
         {5, 0, 1, 0, 0, 0, 11, 0, 15},
         {8, 0, 1, 0, 0, 0, 11, 0, 18},
         {5, 0, 1, 0, 0, 0, 11, 0, 15},
         {4, 0, 1, 0, 0, 0, 11, 0, 14},
-        {3, 7, 1, 0, 0, 0, 11,17, 13},
+        {3, 7, 1, 0, 0, 0, 11,16, 13},
         {2, 0, 1, 0, 0, 0, 11, 0, 12},
     };
 
+    private readonly int[,] boardSetting_2 =
+    {
+        {2, 0, 1, 0, 0, 11, 0, 12},
+        {3, 6, 1, 0, 0, 11,17, 13},
+        {4, 0, 1, 0, 0, 11, 0, 14},
+        {5, 0, 1, 0, 0, 11, 0, 15},
+        {8, 0, 1, 0, 0, 11, 0, 18},
+        {5, 0, 1, 0, 0, 11, 0, 15},
+        {4, 7, 1, 0, 0, 11, 16, 14},
+        {3, 2, 1, 0, 0, 11, 12, 13},
+    };
+
+    private readonly int[,] boardSetting_3 =
+    {
+        {3, 0, 1,0, 11, 0,13},
+        {4, 6, 1,0, 11, 17,14},
+        {5, 0, 1,0, 11, 0,15},
+        {8, 0, 1,0, 11, 0,18},
+        {5, 0, 1,0, 11, 0,15},
+        {4, 7, 1,0, 11, 16,14},
+        {3, 0, 1,0, 11, 0,13},
+    };
+
+    int[,] boardSetting;    
+
     private void Awake()
     {
+        boardSetting = boardSetting_1;
         // 盤のサイズの初期化
-        boardHeight = 9;
-        boardWidth = 9;
-        boardTop = (boardHeight - 1) / 2.0f;
-        boardBottom = -boardTop;
+        boardHeight = boardSetting.GetLength(0);
+        boardWidth = boardSetting.GetLength(1);
+        boardRight = boardWidth;
+        boardTop = boardHeight;
+        // 中心の座標を計算
+        centerPos = new Vector2((boardWidth + 1) / 2.0f, (boardHeight + 1) / 2.0f);
     }
 
-    void Start()
+    public IEnumerator SetBoard()
     {
         // 盤と駒の作成
-        for (int i = 0; i < boardWidth; i++)
+        for (int i = 1; i <= boardWidth; i++)
         {
-            for (int j = 0; j < boardHeight; j++)
+            for (int j = 1; j <= boardHeight; j++)
             {
-                // (0,0)を中心とした座標に直す
-                float x = i - boardWidth / 2;
-                float y = j - boardHeight / 2;
-                Vector3 pos = new Vector3(x, y);
+                Vector3 pos = new Vector3(i, j);
 
                 // 盤の作成
                 Instantiate(tilePrefab, pos, Quaternion.identity);
 
                 // 駒の作成
-                int type = boardSetting[i, j] % 10;     // 駒の種類
-                int player = boardSetting[i, j] / 10;   // プレイヤー
+                int type = boardSetting[i - 1, j - 1] % 10;     // 駒の種類
+                int player = boardSetting[i - 1, j - 1] / 10;   // プレイヤー
 
                 if (type == 0) continue;
 
                 GameObject prefab = prefabPieces[type - 1]; // 駒のPrefab
-                Instantiate(prefab, pos, Quaternion.Euler(0, player * 180, 0)); // プレイヤーによって適切な向きに回転
+                GameObject piece = Instantiate(prefab, pos, Quaternion.Euler(0, 0, player * 180)); // プレイヤーによって適切な向きに回転
+
+                // 駒にプレイヤーのレイヤーを付ける
+                if (player == 0)
+                {
+                    piece.layer = LayerMask.NameToLayer(GameManager.firstPlayerLayer);
+                }
+                else if (player == 1)
+                {
+                    piece.layer = LayerMask.NameToLayer(GameManager.secondPlayerLayer);
+                }
+
+                // 王のオブジェクトを取得する
+                if (type == 8)
+                {
+                    if (player == 0)
+                    {
+                        GameManager.gameManager.firstPlayerKingObj = piece;
+                    }
+                    else if (player == 1)
+                    {
+                        GameManager.gameManager.secondPlayerKingObj = piece;
+                    }
+                }
             }
         }
 
         // 上枠
-        for (int i = 0; i < boardWidth; i++)
+        for (int x = 1; x <= boardWidth; x++)
         {
-            float x = i - boardWidth / 2;
-            Instantiate(frameTilePrefab, new Vector3(x, boardTop + 1), Quaternion.identity);
+            Instantiate(frameTilePrefab, new Vector3(x, boardHeight + 1), Quaternion.identity);
         }
         // 下枠
-        for (int i = 0; i < boardWidth; i++)
+        for (int x = 0; x < boardWidth; x++)
         {
-            float x = i - boardWidth / 2;
-            Instantiate(frameTilePrefab, new Vector3(x, boardBottom - 1), Quaternion.identity);
+            Instantiate(frameTilePrefab, new Vector3(x, 0), Quaternion.identity);
         }
+        yield return null;
     }
 
 }

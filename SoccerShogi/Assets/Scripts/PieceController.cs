@@ -40,7 +40,6 @@ public class PieceController : MonoBehaviour
     private Vector2 pieceScale;             // 駒のサイズ
     private Vector2 oldPos;                 // 移動前の座標
 
-    private string pieceTag = "Piece";      // Pieceタグ
     private string firstPlayerLayer = "FirstPlayer";  // FirstPlayerレイヤー
     private string secondPlayerLayer = "SecondPlayer";    // SecondPlayerレイヤー
     private string thisLayer = "";          // この駒のレイヤー
@@ -51,38 +50,39 @@ public class PieceController : MonoBehaviour
     private bool isNowUpdate = false;    // 更新中フラグ(要改善)
 
 
-
-    private void Awake()
-    {
-        // 盤の初期化
-        boardLeft = GameManager.boardLeft;
-        boardRight = GameManager.boardRight;
-        boardBottom = GameManager.boardBottom;
-        boardTop = GameManager.boardTop;
-    }
-
     private void Start()
     {
         // gameManagerを取得(あまり良くないかも．今のところはこれでいい)
         gameManager = GameManager.gameManager;
 
+        // 盤の初期化
+        boardLeft = BoardManager.boardLeft;
+        boardRight = BoardManager.boardRight;
+        boardBottom = BoardManager.boardBottom;
+        boardTop = BoardManager.boardTop;
+
+        StartCoroutine(SetPiece());
+    }
+
+    public IEnumerator SetPiece()
+    {
+        // GameManagerの初期化完了まで待つ
+        yield return new WaitUntil(() => GameManager.isFinishInitialize);
+
         // 変数の初期化
         piece = GetComponent<Piece>();
         pieceScale = transform.lossyScale;
-        pieces = GameObject.FindGameObjectsWithTag(pieceTag);
+        pieces = gameManager.pieces;
         thisLayer = LayerMask.LayerToName(this.gameObject.layer);
 
-        firstPlayerStand = GameManager.gameManager.firstPlayerStand;
-        secondPlayerStand = GameManager.gameManager.secondPlayerStand;
+        firstPlayerStand = gameManager.firstPlayerStand;
+        secondPlayerStand = gameManager.secondPlayerStand;
         ballObject = BallController.ballObject;
-        piece.Set(transform.position); // 駒の初期設定
-        StartCoroutine(Coroutine()); // 全ての駒の初期設定が終わるのを待つために時間差で呼び出す
         oldPos = transform.position;
-    }
+        piece.Set(transform.position); // 駒の初期設定
 
-    private IEnumerator Coroutine()
-    {
         yield return null;
+
         // 先手駒の更新
         if (thisLayer == GameManager.nowPlayer)
         {
@@ -233,7 +233,7 @@ public class PieceController : MonoBehaviour
                 obj.transform.rotation *= Quaternion.Euler(0, 0, 180);      // 駒の向きを反転
 
                 Quaternion pieceRotation = piece.transform.rotation;
-                obj.transform.position = GameManager.RotateCoordinate(objPiece.GetPieceStandPos(), pieceRotation, GameManager.centerPos);   // 駒台に配置
+                obj.transform.position = GameManager.RotateCoordinate(objPiece.GetPieceStandPos(), pieceRotation, BoardManager.centerPos);   // 駒台に配置
 
                 string objLayer = LayerMask.LayerToName(obj.layer);         // 取った駒のlayer
                 if (objLayer == secondPlayerLayer)
@@ -380,7 +380,7 @@ public class PieceController : MonoBehaviour
             if (pointPos.x < boardLeft || pointPos.x > boardRight || pointPos.y < boardBottom || pointPos.y > boardTop)
             {
                 // ゴールでないまたはパス中でない場合
-                if (!gameManager.GoalExistsAtPos(pointPos) || !GameManager.isPassing)
+                if (!GoalManager.GoalExistsAtPos(pointPos) || !GameManager.isPassing)
                 {
                     removePosList.Add(pointPos); // List追加
                     continue;

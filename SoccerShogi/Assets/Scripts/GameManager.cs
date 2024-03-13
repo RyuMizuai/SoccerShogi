@@ -8,12 +8,6 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    public static Vector2Int centerPos = new Vector2Int(5, 5);  // 盤の中心の座標
-    public static int boardLeft = 1;     // 左端
-    public static int boardRight = 9;    // 右端
-    public static int boardBottom = 1;   // 下端
-    public static int boardTop = 9;      // 上端
-
     private static readonly float epsilon = 0.0001f; // 小さい数
 
     public static string gameState = "";    // ゲームの状態
@@ -46,39 +40,74 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private TMP_Text messageText;           // ゲーム終了後のメッセージのText
 
+    [SerializeField]
+    private TMP_Text scoreText;             // スコアのTextオブジェクト
+    private static string scoreString = "0 - 0";      // スコアのText
+
     private GameObject ballObject;          // サッカーボールのオブジェクト
     public GameObject pointPrefab;          // PointのPrefab
     public GameObject firstPlayerStand;
     public GameObject secondPlayerStand;
-    public GameObject firstPlayerKingObj;       // 先手玉のオブジェクト
-    public GameObject secondPlayerKingObj;        // 後手玉のオブジェクト
 
-    private readonly string firstPlayerLayer = "FirstPlayer";   // FirstPlayerレイヤー
-    private readonly string secondPlayerLayer = "SecondPlayer"; // SecondPlayerレイヤー
-    private string pieceTag = "Piece";                          // Pieceタグ
+    public static readonly string firstPlayerLayer = "FirstPlayer";     // FirstPlayerレイヤー
+    public static readonly string secondPlayerLayer = "SecondPlayer";   // SecondPlayerレイヤー
+    public static readonly string pieceTag = "Piece";                   // Pieceタグ
 
-    private GameObject[] pieces;            // すべての駒のゲームオブジェクト
+    [System.NonSerialized]
+    public GameObject[] pieces;            // すべての駒のゲームオブジェクト
 
     public static GameManager gameManager;  // GameManagerの入れ物
 
-    public static List<Vector2Int> goalPosList = new List<Vector2Int>(); // ゴールの位置
+    public GameObject firstPlayerKingObj;    // 先手玉のオブジェクト
+    public GameObject secondPlayerKingObj;   // 後手玉のオブジェクト
+
+    private BoardManager boardManager;      // BoardManager
+
+    public static bool isFinishInitialize = false;
+
+    // プレイヤーの得点
+    private static int firstPlayerScore = 0;
+    private static int secondPlayerScore = 0;
+
+
 
     private void Awake()
     {
-        gameManager = this;    // static変数に自分を保存する
+        gameManager = this;    // static変数に自分を保存する        
     }
 
     private void Start()
     {
-        pieces = GameObject.FindGameObjectsWithTag(pieceTag);
-        ballObject = BallController.ballObject;
-        promoteButtonPanel.SetActive(false);                // ボタン非表示
-        actionButtonPanel.SetActive(false);                 // ボタン非表示
-        messageText.gameObject.SetActive(false);            // Text非表示
-        gameState = "Playing";                              // ゲーム状態
-        nowPlayer = firstPlayerLayer;                       // 現在のプレイヤー名を先手にする
-        nowSceneName = SceneManager.GetActiveScene().name;  // 現在のシーン名
-        goalPosList.Add(new Vector2Int(5, 10));
+        // ボタンとText非表示
+        promoteButtonPanel.SetActive(false);
+        actionButtonPanel.SetActive(false);
+        messageText.gameObject.SetActive(false);
+
+        scoreText.text = scoreString;                       // スコアを表示
+        boardManager = GetComponent<BoardManager>();        // BoardManager
+        StartCoroutine(InitCoroutine());                    // ゲームの初期設定
+    }
+
+    private IEnumerator InitCoroutine()
+    {
+        yield return StartCoroutine(boardManager.SetBoard());   // 盤と駒を作成
+        Init();                                                 // その他初期化
+    }
+
+
+    // 初期化
+    private void Init()
+    {
+        pieces = GameObject.FindGameObjectsWithTag(pieceTag);   // 全ての駒を取得
+        ballObject = BallController.ballObject;                 // ボールを取得
+
+        gameState = "Playing";                                  // ゲーム状態
+        nowPlayer = firstPlayerLayer;                           // 現在のプレイヤー名を先手にする
+        nowSceneName = SceneManager.GetActiveScene().name;      // 現在のシーン名
+
+        GoalManager.SetGoalPos();                               // ゴールの座標をセット
+
+        isFinishInitialize = true;                              // 初期化完了
     }
     
     // 現在の座標と回転させる向き，回転軸の座標を受け取って，回転後の座標を返す
@@ -101,7 +130,7 @@ public class GameManager : MonoBehaviour
         if (count > 1)
         {
             Quaternion pieceRotation = piece.transform.rotation;
-            Vector2 piecePos = RotateCoordinate(piece.GetPieceStandPos(), pieceRotation, centerPos);    // 駒の座標
+            Vector2 piecePos = RotateCoordinate(piece.GetPieceStandPos(), pieceRotation, BoardManager.centerPos);    // 駒の座標
             Vector2 pos = RotateCoordinate(new Vector2(0.35f, 0.3f), pieceRotation, new Vector2(0.0f, 0.0f)); // 駒からのずれ
             Vector2 textPos = piecePos + pos;   // Textの座標
             textObj.transform.position = textPos;
@@ -377,12 +406,6 @@ public class GameManager : MonoBehaviour
         return TwoPositionsEquals(ballObject.transform.position, v);
     }
 
-    // 受け取った座標がゴール位置か判定する
-    public bool GoalExistsAtPos(Vector2 v)
-    {
-        return goalPosList.Contains(new Vector2Int((int)v.x, (int)v.y));
-    }
-
     // 2つの座標が等しいか判定する
     public static bool TwoPositionsEquals(Vector2 v1, Vector2 v2)
     {
@@ -404,7 +427,7 @@ public class GameManager : MonoBehaviour
         intersectingPosList.Clear();
 
         // ゴールチェック
-        if (GoalExistsAtPos(BallController.ballWorldPos))
+        if (GoalManager.GoalExistsAtPos(BallController.ballWorldPos))
         {
             // ボールがゴールに入ってたらゴール
             StartCoroutine(Goal(nowPlayer));
@@ -476,13 +499,26 @@ public class GameManager : MonoBehaviour
     private IEnumerator Goal(string goalPlayer)
     {
         SoundManager.soundManager.MakeGoalSound();  // ゴールの笛を鳴らす
-        yield return new WaitForSeconds(2.0f);      // 2秒待つ
-        TitleManager.LoadPlayScene();               // 盤面を初期化する
-        // ボールを適切な位置に初期化
+
+        // 得点を加算
         if (goalPlayer == firstPlayerLayer)
         {
-            
+            firstPlayerScore++;
         }
+        else
+        {
+            secondPlayerScore++;
+        }
+        string updateScoreText = "\n" + firstPlayerScore.ToString() + " - " + secondPlayerScore.ToString();
+        scoreString += updateScoreText;
+
+
+        yield return new WaitForSeconds(2.0f);      // 2秒待つ
+        SceneManager.LoadScene(nowSceneName);       // 盤面を初期化する
+       
+        
+        // ボールを適切な位置に初期化
+
     }
 
     // ゲーム終了
@@ -515,7 +551,4 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    
 }
-
-    

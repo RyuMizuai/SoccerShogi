@@ -27,17 +27,19 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
 
     private void Awake()
     {
-        // ”Õ‚Ì‰Šú‰»
-        boardLeft = GameManager.boardLeft;
-        boardRight = GameManager.boardRight;
-        boardBottom = GameManager.boardBottom;
-        boardTop = GameManager.boardTop;
+        
     }
 
     private void Start()
     {
         gameManager = GameManager.gameManager;
         ballObject = BallController.ballObject;
+
+        // ”Õ‚Ì‰Šú‰»
+        boardLeft = BoardManager.boardLeft;
+        boardRight = BoardManager.boardRight;
+        boardBottom = BoardManager.boardBottom;
+        boardTop = BoardManager.boardTop;
     }
 
     private void Update()

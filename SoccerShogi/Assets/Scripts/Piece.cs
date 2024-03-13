@@ -9,9 +9,6 @@ public abstract class Piece : MonoBehaviour
     protected int boardBottom = 1;   // 下端
     protected int boardTop = 9;      // 上端
 
-    private GameObject firstPlayerStand;  // 先手の駒台
-    private GameObject secondPlayerStand;   //後手の駒台
-
     public Sprite pieceSprite;          // 駒の画像
     public Sprite promotedPieceSprite;  // 成駒の画像
 
@@ -22,7 +19,6 @@ public abstract class Piece : MonoBehaviour
     protected PieceStand ps;                // PieceStandの入れ物
     private GameObject[] pieces;          // すべての駒のゲームオブジェクト
 
-    private string pieceTag = "Piece";      // Pieceタグ
     private string firstPlayerLayer = "FirstPlayer";  //First Playerレイヤー
     private string secondPlayerLayer = "SecondPlayer";    // SecondPlayerレイヤー
     private string thisLayer = "";          // 駒のレイヤー
@@ -63,22 +59,25 @@ public abstract class Piece : MonoBehaviour
     {
         // 初期化
         Init();
-        boardLeft = GameManager.boardLeft;
-        boardRight = GameManager.boardRight;
-        boardBottom = GameManager.boardBottom;
-        boardTop = GameManager.boardTop;
+        
     }
 
     private void Start()
     {
-        pieces = GameObject.FindGameObjectsWithTag(pieceTag);
+        boardLeft = BoardManager.boardLeft;
+        boardRight = BoardManager.boardRight;
+        boardBottom = BoardManager.boardBottom;
+        boardTop = BoardManager.boardTop;
+
         SetPieceStand();
         StartCoroutine(Coroutine());
     }
 
     private IEnumerator Coroutine()
     {
-        yield return null;
+        // GameManagerの初期化完了まで待つ
+        yield return new WaitUntil(() => GameManager.isFinishInitialize);
+        pieces = GameManager.gameManager.pieces;    // 駒を取得
     }
 
 
@@ -122,11 +121,11 @@ public abstract class Piece : MonoBehaviour
         thisLayer = LayerMask.LayerToName(gameObject.layer);
         if (thisLayer == firstPlayerLayer)
         {
-            ps = firstPlayerStand.GetComponent<PieceStand>();
+            ps = GameManager.gameManager.firstPlayerStand.GetComponent<PieceStand>();
         }
         else if (thisLayer == secondPlayerLayer)
         {
-            ps = secondPlayerStand.GetComponent<PieceStand>();
+            ps = GameManager.gameManager.secondPlayerStand.GetComponent<PieceStand>();
         }
     }
 
@@ -135,7 +134,7 @@ public abstract class Piece : MonoBehaviour
     {
         Vector2 v = new Vector2(0, stuckPosY);
         // 駒の向きによって座標を反転
-        Vector2 stuckPos = GameManager.RotateCoordinate(v, transform.rotation, GameManager.centerPos);
+        Vector2 stuckPos = GameManager.RotateCoordinate(v, transform.rotation, BoardManager.centerPos);
         return Mathf.RoundToInt(stuckPos.y);
     }
 }
