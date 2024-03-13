@@ -9,10 +9,7 @@ public abstract class Piece : MonoBehaviour
     protected int boardBottom = 1;   // 下端
     protected int boardTop = 9;      // 上端
 
-    [SerializeField]
     private GameObject firstPlayerStand;  // 先手の駒台
-
-    [SerializeField]
     private GameObject secondPlayerStand;   //後手の駒台
 
     public Sprite pieceSprite;          // 駒の画像
@@ -34,27 +31,6 @@ public abstract class Piece : MonoBehaviour
     public bool isPromoted = false; // 成っているか
 
 
-    private void Awake()
-    {
-        // 初期化
-        Init();
-        boardLeft = GameManager.boardLeft;
-        boardRight = GameManager.boardRight;
-        boardBottom = GameManager.boardBottom;
-        boardTop = GameManager.boardTop;
-    }
-
-    private void Start()
-    {
-        pieces = GameObject.FindGameObjectsWithTag(pieceTag);
-        SetPieceStand();
-        StartCoroutine(Coroutine());
-    }
-
-    private IEnumerator Coroutine()
-    {
-        yield return null;
-    }
 
 
     abstract protected void Init(); // 初期化用メソッド
@@ -80,6 +56,30 @@ public abstract class Piece : MonoBehaviour
     abstract public int GetCount();
     // 持ち駒の数のTextを受け取る
     abstract public GameObject GetCountText();
+
+
+
+    private void Awake()
+    {
+        // 初期化
+        Init();
+        boardLeft = GameManager.boardLeft;
+        boardRight = GameManager.boardRight;
+        boardBottom = GameManager.boardBottom;
+        boardTop = GameManager.boardTop;
+    }
+
+    private void Start()
+    {
+        pieces = GameObject.FindGameObjectsWithTag(pieceTag);
+        SetPieceStand();
+        StartCoroutine(Coroutine());
+    }
+
+    private IEnumerator Coroutine()
+    {
+        yield return null;
+    }
 
 
     // 指定の座標に他の駒があるかを判定する
@@ -137,7 +137,6 @@ public abstract class Piece : MonoBehaviour
         // 駒の向きによって座標を反転
         Vector2 stuckPos = GameManager.RotateCoordinate(v, transform.rotation, GameManager.centerPos);
         return Mathf.RoundToInt(stuckPos.y);
-
     }
 }
 

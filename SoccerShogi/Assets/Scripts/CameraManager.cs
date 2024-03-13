@@ -7,7 +7,7 @@ public class CameraManager : MonoBehaviour
     void Start()
     {
         // ƒJƒƒ‰‚Ì‰ŠúˆÊ’u
-        transform.position = new Vector3(GameManager.centerPos.x, GameManager.centerPos.y, -11);
+        transform.position = new Vector3(0, 0, -11);
     }
 
 }

@@ -11,6 +11,7 @@ public class BallController : MonoBehaviour
 
     public static readonly Vector2 ballLocalPos = new Vector2(0, 0.25f);// 駒に対するボールの位置
     public static Vector2 ballWorldPos;                                 // ボールの絶対位置
+    public static readonly Vector2 initialBallPos = new Vector2(5, 8);  // ボールの初期位置
 
     public static GameObject ballObject;        // ボールのオブジェクト
     public static GameObject pieceHoldingBall;  // ボールを保持している駒のオブジェクト
@@ -23,6 +24,7 @@ public class BallController : MonoBehaviour
 
     private void Start()
     {
+        transform.position = initialBallPos;
         ballWorldPos = transform.position;
         pieceHoldingBall = null;
     }

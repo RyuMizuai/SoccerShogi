@@ -28,17 +28,8 @@ public class PieceController : MonoBehaviour
     [SerializeField]
     private PieceType pieceType;            // 駒の種類
 
-    [SerializeField]
     private GameObject firstPlayerStand;    // 先手の駒台
-
-    [SerializeField]
     private GameObject secondPlayerStand;     // 後手の駒台
-
-    [SerializeField]
-    private GameObject firstPlayerKingObj;       // 先手玉のオブジェクト
-
-    [SerializeField]
-    private GameObject secondPlayerKingObj;        // 後手玉のオブジェクト
 
     private GameObject ballObject;          // ボールのオブジェクト
 
@@ -72,13 +63,17 @@ public class PieceController : MonoBehaviour
 
     private void Start()
     {
-        // 変数の初期化
         // gameManagerを取得(あまり良くないかも．今のところはこれでいい)
         gameManager = GameManager.gameManager;
+
+        // 変数の初期化
         piece = GetComponent<Piece>();
         pieceScale = transform.lossyScale;
         pieces = GameObject.FindGameObjectsWithTag(pieceTag);
         thisLayer = LayerMask.LayerToName(this.gameObject.layer);
+
+        firstPlayerStand = GameManager.gameManager.firstPlayerStand;
+        secondPlayerStand = GameManager.gameManager.secondPlayerStand;
         ballObject = BallController.ballObject;
         piece.Set(transform.position); // 駒の初期設定
         StartCoroutine(Coroutine()); // 全ての駒の初期設定が終わるのを待つために時間差で呼び出す

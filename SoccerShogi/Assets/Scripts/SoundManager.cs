@@ -4,9 +4,11 @@ using UnityEngine;
 
 public class SoundManager : MonoBehaviour
 {
-    public AudioClip motionSound;   // ‹î‚ğ‘Å‚Â‚Ì‰¹
+    public AudioClip motionSound;       // ‹î‚ğ‘Å‚Â‚Ì‰¹
     public AudioClip shortWhistleSound; // ’Z‚¢“J‚Ì‰¹
     public AudioClip longWhistleSound;  // ’·‚¢“J‚Ì‰¹
+    public AudioClip goalSound;         // ƒS[ƒ‹‚Ìº
+    public AudioClip cheerSound;        // Š½º
 
 
     AudioSource audioSource;
@@ -38,10 +40,30 @@ public class SoundManager : MonoBehaviour
         audioSource.PlayOneShot(motionSound);
     }
 
-    // ‡I—¹‚Ì“J‚ğ–Â‚ç‚·
-    public void MakeGameEndSound()
+    // ‡ŠJn‚Ì“J‚ğ–Â‚ç‚·
+    public void MakeGameStartSound()
     {
+        audioSource.PlayOneShot(longWhistleSound);
+    }
 
+    // ‡I—¹‚Ì“J‚ğ–Â‚ç‚·
+    public IEnumerator MakeGameEndSound()
+    {
+        // ‰¹º•ÒW‚ªo—ˆ‚È‚©‚Á‚½‚©‚çƒSƒŠ‰Ÿ‚µ‚µ‚½
+        audioSource.PlayOneShot(shortWhistleSound);
+        yield return new WaitForSeconds(0.8f);
+        audioSource.PlayOneShot(shortWhistleSound);
+        yield return new WaitForSeconds(0.8f);
+        audioSource.PlayOneShot(shortWhistleSound);
+        yield return new WaitForSeconds(0.15f);
+        audioSource.PlayOneShot(longWhistleSound);
+    }
+
+    // ƒS[ƒ‹‚ÌƒTƒEƒ“ƒh‚ğ–Â‚ç‚·
+    public void MakeGoalSound()
+    {
+        audioSource.PlayOneShot(goalSound);
+        audioSource.PlayOneShot(cheerSound);
     }
 
 }
