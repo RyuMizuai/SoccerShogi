@@ -78,9 +78,11 @@ public class GameManager : MonoBehaviour
     private static int firstPlayerScore = 0;
     private static int secondPlayerScore = 0;
 
+    private bool isCPU = true;  // 相手がコンピューターかどうか
+
 
     // 駒の名前の対応表
-    private Dictionary<string, string> pieceNameDictionary = new Dictionary<string, string>()
+    private readonly Dictionary<string, string> pieceNameDictionary = new Dictionary<string, string>()
     {
         { "pawn", "歩兵" },
         { "lance", "香車" },
@@ -156,8 +158,8 @@ public class GameManager : MonoBehaviour
         if (count > 1)
         {
             Quaternion pieceRotation = piece.transform.rotation;
-            Vector2 piecePos = RotateCoordinate(piece.GetPieceStandPos(), pieceRotation, BoardManager.centerPos);    // 駒の座標
-            Vector2 pos = RotateCoordinate(new Vector2(0.35f, 0.3f), pieceRotation, new Vector2(0.0f, 0.0f)); // 駒からのずれ
+            Vector2 piecePos = RotateCoordinate(piece.GetPieceStandPos(), pieceRotation, BoardManager.centerPos);   // 持ち駒の位置の座標
+            Vector2 pos = new Vector2(0.35f, 0.3f) * piece.transform.up.y;  // 駒からのずれ
             Vector2 textPos = piecePos + pos;   // Textの座標
             textObj.transform.position = textPos;
             textObj.GetComponent<TMP_Text>().text = count.ToString();
@@ -212,6 +214,7 @@ public class GameManager : MonoBehaviour
         {
             Instantiate(pointPrefab, (Vector2)passPos, Quaternion.identity); // PointのPrefabを作成
         }
+        InactiveActionButton(); // ボタン非表示
     }
 
     // ドリブルボタン
@@ -226,6 +229,7 @@ public class GameManager : MonoBehaviour
         {
             Instantiate(pointPrefab, (Vector2)pointPos, Quaternion.identity); // PointのPrefabを作成
         }
+        InactiveActionButton(); // ボタン非表示
     }
 
     // アクションやめる
@@ -258,6 +262,15 @@ public class GameManager : MonoBehaviour
     // パスボタンとドリブルボタンを表示する
     public void ActiveActionButton()
     {
+        // 選択中の駒
+        GameObject piece = ClickObject.selectingPiece;
+        Vector2 piecePos = piece.transform.position;
+        Quaternion pieceRotation = piece.transform.rotation;
+
+        Vector2 pos = new Vector2(0.75f, 0.3f) * piece.transform.up.y;  // 駒からのずれ
+        actionButtonPanel.transform.position = piecePos + pos; ;        // ボタンの座標
+
+
         actionButtonPanel.SetActive(true);  // ボタン表示
     }
 
@@ -491,6 +504,14 @@ public class GameManager : MonoBehaviour
                 PieceController pc = piece.GetComponent<PieceController>();
                 // 動ける位置を更新する
                 pc.CalculatePointPos();
+
+                if (isCPU && nowPlayer == firstPlayerLayer)
+                {
+                    foreach (Vector2Int pointPos in pc.pointPosList)
+                    {
+                        CPUManager.CPUPos.Add(new Member(pc.gameObject, pointPos));
+                    }
+                }
             }
         }
 
@@ -514,7 +535,12 @@ public class GameManager : MonoBehaviour
         {
             nowPlayer = firstPlayerLayer;
         }
-       
+
+        if (isCPU && nowPlayer == secondPlayerLayer)
+        {
+            CPUManager.MovingCPU();
+        }
+
     }
 
     // ターン終了

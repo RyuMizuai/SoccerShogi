@@ -3789,8 +3789,6 @@ MonoBehaviour:
   pointPrefab: {fileID: 8080122938284574032, guid: 0d12f874fefa323439a6f4af2633a94d, type: 3}
   firstPlayerStand: {fileID: 1424568284}
   secondPlayerStand: {fileID: 1546498780}
-  firstPlayerKingObj: {fileID: 0}
-  secondPlayerKingObj: {fileID: 0}
 --- !u!114 &1833630487
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4078,7 +4076,7 @@ RectTransform:
   m_GameObject: {fileID: 1903141832}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 150881471}
@@ -4088,8 +4086,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -309.99997, y: -211.29498}
-  m_SizeDelta: {x: -980, y: -457.41003}
+  m_AnchoredPosition: {x: -309.99997, y: -220}
+  m_SizeDelta: {x: -980, y: -440}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1903141834
 MonoBehaviour:
