@@ -44,6 +44,12 @@ public class GameManager : MonoBehaviour
     private TMP_Text scoreText;             // スコアのTextオブジェクト
     private static string scoreString = "0 - 0";      // スコアのText
 
+    [SerializeField]
+    private TMP_Text firstPlayerNameText;   // 先手の名前
+
+    [SerializeField]
+    private TMP_Text secoondPlayerNameText; // 後手の名前
+
     private GameObject ballObject;          // サッカーボールのオブジェクト
     public GameObject pointPrefab;          // PointのPrefab
     public GameObject firstPlayerStand;
@@ -58,7 +64,10 @@ public class GameManager : MonoBehaviour
 
     public static GameManager gameManager;  // GameManagerの入れ物
 
+    [System.NonSerialized]
     public GameObject firstPlayerKingObj;    // 先手玉のオブジェクト
+
+    [System.NonSerialized]
     public GameObject secondPlayerKingObj;   // 後手玉のオブジェクト
 
     private BoardManager boardManager;      // BoardManager
@@ -68,6 +77,21 @@ public class GameManager : MonoBehaviour
     // プレイヤーの得点
     private static int firstPlayerScore = 0;
     private static int secondPlayerScore = 0;
+
+
+    // 駒の名前の対応表
+    private Dictionary<string, string> pieceNameDictionary = new Dictionary<string, string>()
+    {
+        { "pawn", "歩兵" },
+        { "lance", "香車" },
+        { "knight", "桂馬" },
+        { "silver", "銀将" },
+        { "gold", "金将" },
+        { "bishop", "角行" },
+        { "rook", "飛車" },
+        { "king", "王将" },
+        { "gyoku", "玉将" },
+    };
 
 
 
@@ -86,6 +110,8 @@ public class GameManager : MonoBehaviour
         scoreText.text = scoreString;                       // スコアを表示
         boardManager = GetComponent<BoardManager>();        // BoardManager
         StartCoroutine(InitCoroutine());                    // ゲームの初期設定
+
+        firstPlayerNameText.text = SetText.firstPlayerName;
     }
 
     private IEnumerator InitCoroutine()
@@ -194,7 +220,7 @@ public class GameManager : MonoBehaviour
         CancelAction(ClickObject.selectingPiece); // クリック中の駒のアクションを初期化
         isDribbling = true; // ドリブル中
         PieceController pc = BallController.pieceHoldingBall.GetComponent<PieceController>();
-        Debug.Log(BallController.pieceHoldingBall);
+
         // ドリブルの範囲を表示
         foreach (Vector2Int pointPos in pc.pointPosList)
         {
@@ -418,6 +444,15 @@ public class GameManager : MonoBehaviour
         // 成るボタンが押されるのを待つ
         yield return new WaitUntil(() => isButtonClicked);
 
+        // ゴールチェック
+        (bool isGoal, string goalName) = GoalManager.GoalExistsAtPos(BallController.ballWorldPos);
+
+        if (isGoal)
+        {
+            // ボールがゴールに入ってたらゴール
+            StartCoroutine(Goal(goalName));
+        }
+
         // 駒を解除
         ClickObject.selectingPiece = null;
         ClickObject.oldSelectingPiece = null;
@@ -425,13 +460,6 @@ public class GameManager : MonoBehaviour
         // 王手関係のListを初期化
         pieceInCheckList.Clear();
         intersectingPosList.Clear();
-
-        // ゴールチェック
-        if (GoalManager.GoalExistsAtPos(BallController.ballWorldPos))
-        {
-            // ボールがゴールに入ってたらゴール
-            StartCoroutine(Goal(nowPlayer));
-        }
 
         BallController.CalculateDribblePos();   // ドリブルの範囲を更新
 
@@ -496,21 +524,44 @@ public class GameManager : MonoBehaviour
     }
 
     // ゴール
-    private IEnumerator Goal(string goalPlayer)
+    private IEnumerator Goal(string goalName)
     {
         SoundManager.soundManager.MakeGoalSound();  // ゴールの笛を鳴らす
 
-        // 得点を加算
-        if (goalPlayer == firstPlayerLayer)
-        {
-            firstPlayerScore++;
-        }
-        else
+        bool isOwnGoal = (goalName == nowPlayer);   // オウンゴールかどうか
+
+        // 入ったゴールによって得点を加算
+        if (goalName == firstPlayerLayer)
         {
             secondPlayerScore++;
         }
-        string updateScoreText = "\n" + firstPlayerScore.ToString() + " - " + secondPlayerScore.ToString();
-        scoreString += updateScoreText;
+        else if (goalName == secondPlayerLayer)
+        {
+            firstPlayerScore++;
+        }
+
+        PieceController pc = ClickObject.selectingPiece.GetComponent<PieceController>();
+        string type = pc.pieceType.ToString();          // 最後にボールを持っていた駒
+        string typeKanji = pieceNameDictionary[type];   // 漢字に変換
+
+        string goalMessage;   // ゴールを決めた時のメッセージ
+        // オウンゴールかどうかでTextを変える
+        if (isOwnGoal)
+        {
+            goalMessage = "オウンゴール！";
+        }
+        else
+        {
+            goalMessage = typeKanji + "のゴール！";
+        }
+
+        // スコアTextを更新
+        string updateScoreText = firstPlayerScore.ToString() + " - " + secondPlayerScore.ToString();
+        scoreString = updateScoreText;
+
+        // ゴールメッセージを表示
+        messageText.text = goalMessage;
+        messageText.gameObject.SetActive(true);
 
 
         yield return new WaitForSeconds(2.0f);      // 2秒待つ

@@ -9,6 +9,7 @@ public class SoundManager : MonoBehaviour
     public AudioClip longWhistleSound;  // ’·‚¢“J‚Ì‰¹
     public AudioClip goalSound;         // ƒS[ƒ‹‚Ìº
     public AudioClip cheerSound;        // Š½º
+    public AudioClip passSound;     // ƒ{[ƒ‹‚ğR‚é‰¹
 
 
     AudioSource audioSource;
@@ -66,4 +67,8 @@ public class SoundManager : MonoBehaviour
         audioSource.PlayOneShot(cheerSound);
     }
 
+    public void MakePassSound()
+    {
+        audioSource.PlayOneShot(passSound);
+    }
 }

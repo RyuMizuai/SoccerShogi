@@ -5,14 +5,15 @@ using UnityEngine;
 // 駒の種類
 public enum PieceType
 {
-    king,
-    rook,
-    bishop,
-    gold,
-    silver,
-    knight,
-    lance,
     pawn,
+    lance,
+    knight,
+    silver,
+    gold,
+    bishop,
+    rook,
+    king,
+    gyoku,
 }
 
 public class PieceController : MonoBehaviour
@@ -25,8 +26,7 @@ public class PieceController : MonoBehaviour
     private readonly int playerCanPromotePos = 7;   // 先手駒が成れる位置
     private readonly int enemyCanPromotePos = 3;    // 後手駒が成れる位置
 
-    [SerializeField]
-    private PieceType pieceType;            // 駒の種類
+    public PieceType pieceType;            // 駒の種類
 
     private GameObject firstPlayerStand;    // 先手の駒台
     private GameObject secondPlayerStand;     // 後手の駒台
@@ -149,7 +149,7 @@ public class PieceController : MonoBehaviour
                     {
                         Vector2Int v = new Vector2Int(i, j);
                         // すでに駒があればスキップ
-                        if (piece.PieceExistsAtPos(v).Item1) continue;
+                        if (piece.PieceExistsAtPos(v).Exists) continue;
 
                         // 置いたらずっと動けないマスはスキップ
                         if (thisLayer == firstPlayerLayer)
@@ -186,7 +186,7 @@ public class PieceController : MonoBehaviour
             thisLayer = LayerMask.LayerToName(gameObject.layer); // 動かす駒のレイヤー
 
             // 駒が王または金でないかつ，成った状態でないとき，成れるか判別する
-            if (!(pieceType == PieceType.king || pieceType == PieceType.gold) && piece.isPromoted == false)
+            if (!(GetComponent<Piece>().promotedPieceSprite == null) && piece.isPromoted == false)
             {
                 int oldY = Mathf.RoundToInt(oldPos.y);
 
@@ -223,9 +223,10 @@ public class PieceController : MonoBehaviour
             }
 
             // 取った駒を持ち駒にする
-            if (piece.PieceExistsAtPos(newPosInt).Item1)
+            (bool exists, GameObject obj) = piece.PieceExistsAtPos(newPosInt);
+
+            if (exists)
             {
-                GameObject obj = piece.PieceExistsAtPos(newPosInt).Item2;   // 取った駒のゲームオブジェクト
                 Piece objPiece = obj.GetComponent<Piece>();                 // 取った駒のPieceクラス
 
                 obj.transform.DetachChildren();                             // 子を削除
@@ -350,9 +351,10 @@ public class PieceController : MonoBehaviour
         {
             Vector2Int v = new Vector2Int(i, j);
             // 座標(i,j)に駒があるとき
-            if (piece.PieceExistsAtPos(v).Item1)
+            (bool exists, GameObject obj) = piece.PieceExistsAtPos(v);
+
+            if (exists)
             {
-                GameObject obj = piece.PieceExistsAtPos(v).Item2; // (i,j)にある駒のオブジェクト
                 PieceController objPc = obj.GetComponent<PieceController>();
 
                 if (objPc.pieceType != PieceType.pawn || LayerMask.LayerToName(obj.layer) != thisLayer) continue;
@@ -380,7 +382,7 @@ public class PieceController : MonoBehaviour
             if (pointPos.x < boardLeft || pointPos.x > boardRight || pointPos.y < boardBottom || pointPos.y > boardTop)
             {
                 // ゴールでないまたはパス中でない場合
-                if (!GoalManager.GoalExistsAtPos(pointPos) || !GameManager.isPassing)
+                if (!GoalManager.GoalExistsAtPos(pointPos).Exists || !GameManager.isPassing)
                 {
                     removePosList.Add(pointPos); // List追加
                     continue;
@@ -427,14 +429,14 @@ public class PieceController : MonoBehaviour
             // パス以外の場合
             else
             {
-                // 味方の駒の位置には移動できない
+                // 駒が存在するなら駒のオブジェクトを取得
+                (bool pieceExists, GameObject pieceObj) = piece.PieceExistsAtPos(pointPos);
 
-                // 味方の駒と重なっているか
-                if (piece.PieceExistsAtPos(pointPos).Item1)
+                // いずれかの駒があるとき
+                if (pieceExists)
                 {
-                    GameObject obj = piece.PieceExistsAtPos(pointPos).Item2;
-                    // 味方の駒ならと同じ位置なら座標Listから削除
-                    if (LayerMask.LayerToName(obj.layer) == thisLayer)
+                    // 味方の駒なら座標Listから削除
+                    if (LayerMask.LayerToName(pieceObj.layer) == thisLayer)
                     {
                         removePosList.Add(pointPos); // List追加
                         continue;
@@ -449,21 +451,21 @@ public class PieceController : MonoBehaviour
                     // 動かすと詰みかどうか
                     Vector2 nowPos = transform.position;        // 座標を保持
                     transform.position = (Vector2)pointPos;     // 仮に動かす
-                    // 仮に取る駒を保持する変数
-                    GameObject obj = null;
-                    string objLayer = "";
 
-                    if (piece.PieceExistsAtPos(pointPos).Item1)
+                    // 仮に取る駒のレイヤーを保持する変数
+                    string tempLayer = "";
+
+                    if (pieceExists)
                     {
-                        // 動かした先で駒を取れるなら仮に取ったことにする
-                        obj = piece.PieceExistsAtPos(pointPos).Item2;   // 取った駒のゲームオブジェクト
-                        objLayer = LayerMask.LayerToName(obj.layer);    // 取った駒のレイヤー
-                        if (objLayer != thisLayer)
+                        // 動かした先に駒があるなら仮に取ったことにする
+                        tempLayer = LayerMask.LayerToName(pieceObj.layer);    // 仮に取る駒のレイヤーを保持
+                        if (tempLayer != thisLayer)
                         {
                             // 仮に取った駒のレイヤーを一時的に変更
-                            obj.layer = LayerMask.NameToLayer("Default");
+                            pieceObj.layer = LayerMask.NameToLayer("Default");
                         }
                     }
+
                     // 動かすと詰みなら座標Listから削除
                     if (thisLayer == firstPlayerLayer)
                     {
@@ -481,10 +483,11 @@ public class PieceController : MonoBehaviour
                             removePosList.Add(pointPos);    // List追加
                         }
                     }
+
                     // 仮に取った駒のレイヤーと自身の座標を元に戻す
-                    if (obj != null)
+                    if (pieceObj != null)
                     {
-                        obj.layer = LayerMask.NameToLayer(objLayer);
+                        pieceObj.layer = LayerMask.NameToLayer(tempLayer);
                     }
                     transform.position = nowPos;
                 }

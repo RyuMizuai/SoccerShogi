@@ -24,22 +24,18 @@ public class BallController : MonoBehaviour
 
     private void Start()
     {
-        StartCoroutine(SetBall());
         pieceHoldingBall = null;
     }
 
-    private IEnumerator SetBall()
+    public static void SetBall()
     {
-        // GameManagerの初期化完了まで待つ
-        yield return new WaitUntil(() => GameManager.isFinishInitialize);
-
         // ボールの位置を初期化
         float x = Mathf.Round(BoardManager.centerPos.x);
         float y = Mathf.Round(BoardManager.centerPos.y);
         //initialBallPos = new Vector2(x, y - 1);
-        initialBallPos = new Vector2(5, 8);
-        transform.position = initialBallPos;
-        ballWorldPos = transform.position;
+        initialBallPos = new Vector2(5, 5);
+        ballObject.transform.position = initialBallPos;
+        ballWorldPos = ballObject.transform.position;
     }
 
     // ドリブルで動ける座標を計算する

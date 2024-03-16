@@ -145,11 +145,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a9d51e5336a20f4396625985f4542cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pieceType: 1
-  firstPlayerStand: {fileID: 0}
-  secondPlayerStand: {fileID: 0}
-  firstPlayerKingObj: {fileID: 0}
-  secondPlayerKingObj: {fileID: 0}
+  pieceType: 6
 --- !u!114 &1038772325536235312
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -162,8 +158,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 830280167a58a0e419fefd583f4ce011, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  firstPlayerStand: {fileID: 0}
-  secondPlayerStand: {fileID: 0}
   pieceSprite: {fileID: 21300000, guid: c39bbd437f305854e9284f0acbace96a, type: 3}
   promotedPieceSprite: {fileID: 21300000, guid: f99f814d8eb89fb41aa243ace3c0eabb, type: 3}
 --- !u!114 &2841603743089355980

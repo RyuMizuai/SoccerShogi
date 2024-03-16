@@ -42,7 +42,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
         boardTop = BoardManager.boardTop;
     }
 
-    private void Update()
+    /*private void Update()
     {
         if (GameManager.gameState == "Playing")
         {
@@ -70,7 +70,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                 //}
             }
         }
-    }
+    }*/
 
     // クリック
     public void OnPointerClick(PointerEventData eventData)
@@ -112,6 +112,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                     // パス
                     if (GameManager.isPassing)
                     {
+                        SoundManager.soundManager.MakePassSound();  // パスの効果音
                         selectingPiece.transform.DetachChildren();  // 子のボールを削除
                         int posX = Mathf.RoundToInt(obj.transform.position.x);
                         int posY = Mathf.RoundToInt(obj.transform.position.y);
@@ -121,14 +122,16 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                         GameManager.isPassing = false;          // パス中オフ
 
                         // 移動先に駒がある場合ボールを保持させる
-                        if (piece.PieceExistsAtPos(newBallPos).Item1)
+                        (bool exists, GameObject pieceObj) = piece.PieceExistsAtPos(newBallPos);
+
+                        if (exists)
                         {
-                            GameObject pieceObj = piece.PieceExistsAtPos(newBallPos).Item2;
                             ballObject.transform.SetParent(pieceObj.transform);                 // 駒の子にする
                             ballObject.transform.localPosition = BallController.ballLocalPos;   // ボールの位置を駒に対して少しずらす
                             BallController.pieceHoldingBall = pieceObj;                         // ボール保持
 
                         }
+                        
                     }
                     // ドリブル
                     else if (GameManager.isDribbling)

@@ -80,9 +80,8 @@ public abstract class Piece : MonoBehaviour
         pieces = GameManager.gameManager.pieces;    // ‹î‚ğæ“¾
     }
 
-
     // w’è‚ÌÀ•W‚É‘¼‚Ì‹î‚ª‚ ‚é‚©‚ğ”»’è‚·‚é
-    public (bool, GameObject) PieceExistsAtPos(Vector2Int v)
+    public (bool Exists, GameObject Object) PieceExistsAtPos(Vector2Int v)
     {
         foreach (GameObject piece in pieces)
         {

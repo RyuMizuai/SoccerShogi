@@ -31,7 +31,7 @@ public class BoardManager : MonoBehaviour
         {3, 6, 1, 0, 0, 0, 11,17, 13},
         {4, 0, 1, 0, 0, 0, 11, 0, 14},
         {5, 0, 1, 0, 0, 0, 11, 0, 15},
-        {8, 0, 1, 0, 0, 0, 11, 0, 18},
+        {8, 0, 1, 0, 0, 0, 11, 0, 19},
         {5, 0, 1, 0, 0, 0, 11, 0, 15},
         {4, 0, 1, 0, 0, 0, 11, 0, 14},
         {3, 7, 1, 0, 0, 0, 11,16, 13},
@@ -40,14 +40,15 @@ public class BoardManager : MonoBehaviour
 
     private readonly int[,] boardSetting_2 =
     {
-        {2, 0, 1, 0, 0, 11, 0, 12},
-        {3, 6, 1, 0, 0, 11,17, 13},
-        {4, 0, 1, 0, 0, 11, 0, 14},
-        {5, 0, 1, 0, 0, 11, 0, 15},
-        {8, 0, 1, 0, 0, 11, 0, 18},
-        {5, 0, 1, 0, 0, 11, 0, 15},
-        {4, 7, 1, 0, 0, 11, 16, 14},
-        {3, 2, 1, 0, 0, 11, 12, 13},
+        {2, 0, 1, 0, 0, 0, 11, 0, 12},
+        {3, 6, 1, 0, 0, 0, 11,17, 13},
+        {4, 0, 1, 0, 0, 19, 11, 0, 14},
+        {5, 0, 1, 0, 0, 0, 11, 5, 0},
+        {8, 0, 1, 0, 0, 0, 11, 0, 0},
+        {5, 0, 1, 0, 0, 0, 11, 0, 15},
+        {4, 0, 1, 0, 0, 0, 11, 0, 14},
+        {3, 0, 1, 0, 0, 0, 11,16, 13},
+        {2, 0, 1, 0, 0, 0, 11, 0, 12},
     };
 
     private readonly int[,] boardSetting_3 =
@@ -55,17 +56,30 @@ public class BoardManager : MonoBehaviour
         {3, 0, 1,0, 11, 0,13},
         {4, 6, 1,0, 11, 17,14},
         {5, 0, 1,0, 11, 0,15},
-        {8, 0, 1,0, 11, 0,18},
+        {8, 0, 1,0, 11, 0,19},
         {5, 0, 1,0, 11, 0,15},
         {4, 7, 1,0, 11, 16,14},
         {3, 0, 1,0, 11, 0,13},
+    };
+
+    private readonly int[,] boardSetting_4 =
+    {
+        {0, 0, 0,0, 0, 0,0,0,0},
+        {0, 0, 0,0, 0, 0,0,0,0},
+        {0, 0, 0,0, 0, 0,0,0,0},
+        {0, 0, 0,0, 0, 0,0,0,0},
+        {8, 0, 0,1, 0, 0,0,0,19},
+        {0, 0, 0,0, 0, 0,0,0,0},
+        {0, 0, 0,0, 0, 0,0,0,0},
+        {0, 0, 0,0, 0, 0,0,0,0},
+        {0, 0, 0,0, 0, 0,0,0,0},
     };
 
     int[,] boardSetting;    
 
     private void Awake()
     {
-        boardSetting = boardSetting_1;
+        boardSetting = boardSetting_4;
         // 盤のサイズの初期化
         boardHeight = boardSetting.GetLength(0);
         boardWidth = boardSetting.GetLength(1);
@@ -73,6 +87,11 @@ public class BoardManager : MonoBehaviour
         boardTop = boardHeight;
         // 中心の座標を計算
         centerPos = new Vector2((boardWidth + 1) / 2.0f, (boardHeight + 1) / 2.0f);
+    }
+
+    private void Start()
+    {
+        BallController.SetBall();   // ボールの座標を設定
     }
 
     public IEnumerator SetBoard()
@@ -106,17 +125,14 @@ public class BoardManager : MonoBehaviour
                     piece.layer = LayerMask.NameToLayer(GameManager.secondPlayerLayer);
                 }
 
-                // 王のオブジェクトを取得する
+                // 王と玉のオブジェクトを取得する
                 if (type == 8)
                 {
-                    if (player == 0)
-                    {
-                        GameManager.gameManager.firstPlayerKingObj = piece;
-                    }
-                    else if (player == 1)
-                    {
-                        GameManager.gameManager.secondPlayerKingObj = piece;
-                    }
+                    GameManager.gameManager.firstPlayerKingObj = piece;
+                }
+                else if (type == 9)
+                {
+                    GameManager.gameManager.secondPlayerKingObj = piece;
                 }
             }
         }
