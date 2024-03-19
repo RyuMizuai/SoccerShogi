@@ -141,6 +141,9 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                         GameManager.isDribbling = false;        // ドリブル中オフ
                     }
                     gameManager.InactiveActionButton(); // ボタンを非表示
+
+                    // ターン終了
+                    gameManager.TurnEnd();
                 }
                 // 普通に動かす場合
                 else
@@ -157,9 +160,6 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                 selectingPiecePos = selectingPiece.transform.position;  // 駒の位置を保持
                 BallController.ballWorldPos = ballObject.transform.position;  // ボールの位置を保持
 
-
-                // ターン終了
-                gameManager.TurnEnd();
             }
         }
     }

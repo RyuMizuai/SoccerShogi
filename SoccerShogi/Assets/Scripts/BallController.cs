@@ -33,7 +33,7 @@ public class BallController : MonoBehaviour
         float x = Mathf.Round(BoardManager.centerPos.x);
         float y = Mathf.Round(BoardManager.centerPos.y);
         //initialBallPos = new Vector2(x, y - 1);
-        initialBallPos = new Vector2(5, 5);
+        initialBallPos = new Vector2(5, 4);
         ballObject.transform.position = initialBallPos;
         ballWorldPos = ballObject.transform.position;
     }
