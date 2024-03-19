@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 907276486790856496}
   m_Layer: 0
   m_Name: Audio
-  m_TagString: Untagged
+  m_TagString: Audio
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -45,7 +45,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.2
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -141,9 +141,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec4d35b8e645d584c997e424c5883e00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  motionSound: {fileID: 8300000, guid: 93e938926e177704eb8e8d84c09aae4f, type: 3}
+  makeMoveSound: {fileID: 8300000, guid: 93e938926e177704eb8e8d84c09aae4f, type: 3}
   shortWhistleSound: {fileID: 8300000, guid: 905dcf511268ed146b97da9468b4c106, type: 3}
   longWhistleSound: {fileID: 8300000, guid: 7b80e551208d7d649b9a39dc97c05233, type: 3}
   goalSound: {fileID: 8300000, guid: cea1899a1d245d14caf80e95e6f1660f, type: 3}
   cheerSound: {fileID: 8300000, guid: dfd165b9a3aebe84f93ac1fb79ebd256, type: 3}
   passSound: {fileID: 8300000, guid: be0b628bf1d0f4b429a3b5e529e9bad5, type: 3}
+  brightSelectSound: {fileID: 8300000, guid: 815533d892c8c2a4cbc6dff29b66fdb7, type: 3}
+  sadSelectSound: {fileID: 8300000, guid: ed69f2d46347e864ba7cf17ed498b22d, type: 3}

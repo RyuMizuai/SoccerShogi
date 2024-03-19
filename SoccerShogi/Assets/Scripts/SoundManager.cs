@@ -4,12 +4,14 @@ using UnityEngine;
 
 public class SoundManager : MonoBehaviour
 {
-    public AudioClip motionSound;       // 駒を打つ時の音
+    public AudioClip makeMoveSound;     // 駒を打つ時の音
     public AudioClip shortWhistleSound; // 短い笛の音
     public AudioClip longWhistleSound;  // 長い笛の音
     public AudioClip goalSound;         // ゴールの声
     public AudioClip cheerSound;        // 歓声
-    public AudioClip passSound;     // ボールを蹴る音
+    public AudioClip passSound;         // ボールを蹴る音
+    public AudioClip brightSelectSound; // 明るい選択音
+    public AudioClip sadSelectSound;    // 暗い選択音
 
 
     AudioSource audioSource;
@@ -28,6 +30,7 @@ public class SoundManager : MonoBehaviour
         {
             Destroy(gameObject);    // ゲームオブジェクトを破棄
         }
+
     }
 
     private void Start()
@@ -38,7 +41,7 @@ public class SoundManager : MonoBehaviour
     // 駒を打つ音を鳴らす
     public void MakeMotionSound()
     {
-        audioSource.PlayOneShot(motionSound);
+        audioSource.PlayOneShot(makeMoveSound);
     }
 
     // 試合開始の笛を鳴らす
@@ -67,8 +70,27 @@ public class SoundManager : MonoBehaviour
         audioSource.PlayOneShot(cheerSound);
     }
 
+    // パス時の音
     public void MakePassSound()
     {
         audioSource.PlayOneShot(passSound);
+    }
+
+    // 選択時の音1
+    public void MakeBrightSelectSound()
+    {
+        audioSource.PlayOneShot(brightSelectSound);
+    }
+
+    // 選択時の音2
+    public void MakeSadSelectSound()
+    {
+        audioSource.PlayOneShot(sadSelectSound);
+    }
+
+    // 歓声の音
+    public void MakeCheerSound()
+    {
+        audioSource.PlayOneShot(cheerSound);
     }
 }

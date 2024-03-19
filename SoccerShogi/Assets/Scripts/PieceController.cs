@@ -302,6 +302,9 @@ public class PieceController : MonoBehaviour
         transform.position = (Vector3Int)newPosInt;
         transform.localScale = pieceScale;
         oldPos = transform.position;    // 次に動かす時のために更新
+
+        // ターン終了
+        gameManager.TurnEnd();
     }
 
     // 駒が持ち駒か判定する

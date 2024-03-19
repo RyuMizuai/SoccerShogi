@@ -8,6 +8,7 @@ TagManager:
   - Piece
   - GameManager
   - Ball
+  - Audio
   layers:
   - Default
   - TransparentFX

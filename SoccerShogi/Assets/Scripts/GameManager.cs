@@ -38,6 +38,9 @@ public class GameManager : MonoBehaviour
     private GameObject actionButtonPanel;   // アクションボタンパネル
 
     [SerializeField]
+    private GameObject optionPanel;         // 設定画面のパネル
+
+    [SerializeField]
     private TMP_Text messageText;           // ゲーム終了後のメッセージのText
 
     [SerializeField]
@@ -104,16 +107,20 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        // ボタンとText非表示
+        // UIを非表示
         promoteButtonPanel.SetActive(false);
         actionButtonPanel.SetActive(false);
         messageText.gameObject.SetActive(false);
+        optionPanel.SetActive(false);
 
         scoreText.text = scoreString;                       // スコアを表示
         boardManager = GetComponent<BoardManager>();        // BoardManager
+        nowSceneName = SceneManager.GetActiveScene().name;  // 現在のシーン名
+
         StartCoroutine(InitCoroutine());                    // ゲームの初期設定
 
         firstPlayerNameText.text = SetText.firstPlayerName;
+        secoondPlayerNameText.text = SetText.secondPlayerName;
     }
 
     private IEnumerator InitCoroutine()
@@ -129,13 +136,13 @@ public class GameManager : MonoBehaviour
         pieces = GameObject.FindGameObjectsWithTag(pieceTag);   // 全ての駒を取得
         ballObject = BallController.ballObject;                 // ボールを取得
 
-        gameState = "Playing";                                  // ゲーム状態
         nowPlayer = firstPlayerLayer;                           // 現在のプレイヤー名を先手にする
-        nowSceneName = SceneManager.GetActiveScene().name;      // 現在のシーン名
 
         GoalManager.SetGoalPos();                               // ゴールの座標をセット
 
         isFinishInitialize = true;                              // 初期化完了
+
+        gameState = "Playing";                                  // ゲーム状態
     }
     
     // 現在の座標と回転させる向き，回転軸の座標を受け取って，回転後の座標を返す
@@ -173,7 +180,7 @@ public class GameManager : MonoBehaviour
     }
 
     // 成るボタン
-    public void PromotePieceButton()
+    public void PromoteButton()
     {
         Piece piece = ClickObject.selectingPiece.GetComponent<Piece>(); // 操作中の駒
         piece.isPromoted = true;
@@ -184,7 +191,7 @@ public class GameManager : MonoBehaviour
     }
     
     // 成らずボタン
-    public void NotPromotePieceButton()
+    public void NotPromoteButton()
     {
         // ボタンを消すだけ
         promoteButtonPanel.SetActive(false);    // ボタン非表示
@@ -284,6 +291,21 @@ public class GameManager : MonoBehaviour
     public void RetryButton()
     {
         SceneManager.LoadScene(nowSceneName);   // 現在のシーンを読み込む
+    }
+
+    // 設定ボタン
+    public void OptionButton()
+    {
+        if (nowPlayer == firstPlayerLayer)
+        {
+            optionPanel.SetActive(true);
+        }
+    }
+
+    // 設定画面から戻るボタン
+    public void ReturnFromOptionButton()
+    {
+        optionPanel.SetActive(false);
     }
 
     // 入力されたプレーヤーが王手をしているかどうか判定する
@@ -452,7 +474,7 @@ public class GameManager : MonoBehaviour
     }
 
 
-    public IEnumerator PromoteButtonCoroutine()
+    private IEnumerator TurnEndCoroutine()
     {
         // 成るボタンが押されるのを待つ
         yield return new WaitUntil(() => isButtonClicked);
@@ -463,7 +485,7 @@ public class GameManager : MonoBehaviour
         if (isGoal)
         {
             // ボールがゴールに入ってたらゴール
-            StartCoroutine(Goal(goalName));
+            yield return StartCoroutine(Goal(goalName));
         }
 
         // 駒を解除
@@ -505,6 +527,7 @@ public class GameManager : MonoBehaviour
                 // 動ける位置を更新する
                 pc.CalculatePointPos();
 
+                // CPUモードの場合，後手が打てるマスをすべて格納
                 if (isCPU && nowPlayer == firstPlayerLayer)
                 {
                     foreach (Vector2Int pointPos in pc.pointPosList)
@@ -536,8 +559,10 @@ public class GameManager : MonoBehaviour
             nowPlayer = firstPlayerLayer;
         }
 
+        // CPUモードなら自動で打たせる
         if (isCPU && nowPlayer == secondPlayerLayer)
         {
+            yield return new WaitForSeconds(1.0f);
             CPUManager.MovingCPU();
         }
 
@@ -546,12 +571,14 @@ public class GameManager : MonoBehaviour
     // ターン終了
     public void TurnEnd()
     {
-        StartCoroutine(PromoteButtonCoroutine());   // ボタンコルーチンを呼ぶ
+        StartCoroutine(TurnEndCoroutine());   // ボタンコルーチンを呼ぶ
     }
 
     // ゴール
     private IEnumerator Goal(string goalName)
     {
+        gameState = "Goal";
+
         SoundManager.soundManager.MakeGoalSound();  // ゴールの笛を鳴らす
 
         bool isOwnGoal = (goalName == nowPlayer);   // オウンゴールかどうか
@@ -612,7 +639,7 @@ public class GameManager : MonoBehaviour
         messageText.gameObject.SetActive(true);
 
         yield return new WaitForSeconds(3.0f);  // 3秒待つ
-        TitleManager.LoadStartScene();          // スタートシーンを読み込む
+        TitleManager.LoadTitleScene();          // スタートシーンを読み込む
     }
 
     // 投了ボタン

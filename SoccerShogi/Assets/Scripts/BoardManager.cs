@@ -64,22 +64,22 @@ public class BoardManager : MonoBehaviour
 
     private readonly int[,] boardSetting_4 =
     {
-        {0, 0, 0,0, 0, 0,0,0,0},
-        {0, 0, 0,0, 0, 0,0,0,0},
-        {0, 0, 0,0, 0, 0,0,0,0},
-        {0, 0, 0,6, 0, 0,0,0,0},
+        {0, 0, 0,0, 0, 0,0,0,12},
+        {0, 0, 0,0, 0, 0,0,0,12},
+        {0, 0, 0,0, 0, 0,0,0,12},
+        {0, 0, 0,0, 0, 0,0,0,12},
         {8, 0, 0,0, 0, 0,0,0,19},
-        {0, 0, 0,0, 0, 0,0,0,0},
-        {0, 0, 0,0, 0, 0,0,0,0},
-        {0, 0, 0,0, 0, 0,0,0,0},
-        {0, 0, 0,0, 0, 0,0,0,0},
+        {0, 0, 0,0, 0, 0,0,0,12},
+        {0, 0, 0,0, 0, 0,0,0,12},
+        {0, 0, 0,0, 0, 0,0,0,12},
+        {0, 0, 0,0, 0, 0,0,0,12},
     };
 
     int[,] boardSetting;    
 
     private void Awake()
     {
-        boardSetting = boardSetting_4;
+        boardSetting = boardSetting_1;
         // ”Õ‚ÌƒTƒCƒY‚Ì‰Šú‰»
         boardHeight = boardSetting.GetLength(0);
         boardWidth = boardSetting.GetLength(1);

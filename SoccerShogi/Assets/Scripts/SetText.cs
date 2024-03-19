@@ -1,6 +1,5 @@
 using UnityEngine;
 using TMPro;
-using UnityEngine.SceneManagement;
 
 public class SetText : MonoBehaviour
 {
@@ -9,8 +8,8 @@ public class SetText : MonoBehaviour
     public TMP_InputField secondPlayerNameInput;
 
     // プレイヤーの名前
-    public static string firstPlayerName = "名前";
-    public static string secondPlayerName;
+    public static string firstPlayerName = "あなた";
+    public static string secondPlayerName = "あいて";
 
     // 設定完了
     public void FinishSetting()
@@ -20,7 +19,7 @@ public class SetText : MonoBehaviour
         {
             firstPlayerName = firstPlayerNameInput.text;
             secondPlayerName = secondPlayerNameInput.text;
-            SceneManager.LoadScene("AllCoat");
+            TitleManager.LoadPlayScene();
             SoundManager.soundManager.MakeGameStartSound();
         }
         else
