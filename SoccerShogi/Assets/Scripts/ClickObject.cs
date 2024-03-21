@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -15,7 +13,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
     private static readonly string ballTag = "Ball"; // Ballタグ
 
     [System.NonSerialized]
-    public bool isSelecting = false;  // 選択中フラグ
+    public bool isSelecting = false;  // 選択中かどうか
 
     public static GameObject selectingPiece = null;     // 選択している駒のオブジェクト
     public static GameObject oldSelectingPiece = null;  // 前に選択していた駒のオブジェクト
@@ -24,6 +22,8 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
     private GameManager gameManager;    // GameManagerの入れ物
 
     private GameObject ballObject;      // ボールのオブジェクト
+
+    private bool isCursor = false;      // カーソル移動させるか
 
     private void Awake()
     {
@@ -42,35 +42,37 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
         boardTop = BoardManager.boardTop;
     }
 
-    /*private void Update()
+    private void Update()
     {
-        if (GameManager.gameState == "Playing")
-        {
-            // カーソル移動させる(無くてもいい)
-            if (isSelecting)
+        if (isCursor) { 
+            if (GameManager.gameState == "Playing")
             {
-                Vector3 mousePos = Input.mousePosition;
-                mousePos.z = 10;    // カーソルはスクリーン座標のためz座標を10にする
-                Vector3 pos = Camera.main.ScreenToWorldPoint(mousePos);  // カーソル位置をワールド座標に変換
-                // カーソルが盤上の場合のみ追従させる(無くてもいい)
-                //if (pos.x > boardLeft - 0.5 && pos.x < boardRight + 0.5 && pos.y > boardBottom - 0.5 && pos.y < boardTop + 0.5)
-                //{
-                    // ボールを持っていないか，ドリブル中の場合
-                    if (BallController.pieceHoldingBall != gameObject || GameManager.isDribbling)
-                    {
-                        // 選択中の駒をカーソル移動させる
-                        transform.position = pos;
-                    }
-                    // パス中の場合
-                    else if (GameManager.isPassing)
-                    {
-                        // ボールをカーソル移動させる
-                        ballObject.transform.position = pos;
-                    }
-                //}
+                // カーソル移動させる(無くてもいい)
+                if (isSelecting)
+                {
+                    Vector3 mousePos = Input.mousePosition;
+                    mousePos.z = 10;    // カーソルはスクリーン座標のためz座標を10にする
+                    Vector3 pos = Camera.main.ScreenToWorldPoint(mousePos);  // カーソル位置をワールド座標に変換
+                    // カーソルが盤上の場合のみ追従させる(無くてもいい)
+                    //if (pos.x > boardLeft - 0.5 && pos.x < boardRight + 0.5 && pos.y > boardBottom - 0.5 && pos.y < boardTop + 0.5)
+                    //{
+                        // ボールを持っていないか，ドリブル中の場合
+                        if (BallController.pieceHoldingBall != gameObject || GameManager.isDribbling)
+                        {
+                            // 選択中の駒をカーソル移動させる
+                            transform.position = pos;
+                        }
+                        // パス中の場合
+                        else if (GameManager.isPassing)
+                        {
+                            // ボールをカーソル移動させる
+                            ballObject.transform.position = pos;
+                        }
+                    //}
+                }
             }
         }
-    }*/
+    }
 
     // クリック
     public void OnPointerClick(PointerEventData eventData)
@@ -131,7 +133,9 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                             BallController.pieceHoldingBall = pieceObj;                         // ボール保持
 
                         }
-                        
+                        // ターン終了
+                        gameManager.TurnEnd();
+
                     }
                     // ドリブル
                     else if (GameManager.isDribbling)
@@ -142,8 +146,6 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                     }
                     gameManager.InactiveActionButton(); // ボタンを非表示
 
-                    // ターン終了
-                    gameManager.TurnEnd();
                 }
                 // 普通に動かす場合
                 else
@@ -196,11 +198,10 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
     }
 
     // 操作をキャンセルする
-    private void CancelOperation(GameObject obj)
+    private void CancelOperation(GameObject pieceObj)
     {
-        DeselectPiece(obj);                 // 選択解除
-        DeleteAllPoints();                  // Point削除
-        gameManager.CancelAction(obj);      // パス，ドリブルフラグと駒とボールの座標を戻す
+        DeselectPiece(pieceObj);            // 選択解除
+        gameManager.CancelAction(pieceObj); // パス，ドリブルフラグと駒とボールの座標を戻す pointも削除
         gameManager.InactiveActionButton(); // ボタン非表示
     }
 
@@ -225,8 +226,8 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
             // 選択中の駒をもう一度クリックした場合
             if (isSelecting)
             {
-                // 持ち駒を選択していた場合
-                if (pc.IsInHand())
+                // 持ち駒を選択していた場合，かつカーソルオンの時
+                if (pc.IsInHand() && isCursor)
                 {
                     // 一時的に減らした持ち駒数の表示を戻す
                     selectingPiece.GetComponent<Piece>().CountUp();
@@ -241,7 +242,7 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
             // 選択中の駒でない駒をクリックした場合
             else
             {
-                // 他の駒を選択していた場合(ボール保持中の駒を選択しているとき)
+                // 他の駒を選択していた場合(カーソルオンならボール保持中の駒を選択していたときのみ)
                 if (oldSelectingPiece != null)
                 {
                     CancelOperation(oldSelectingPiece);  // 前の駒の選択解除
@@ -249,6 +250,13 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
 
                 SelectPiece(selectingPiece);                            // 選択
                 selectingPiecePos = selectingPiece.transform.position;  // 位置を保持
+
+                // 持ち駒でないかつカーソルオフなら，わかりやすいように駒を少しずらす
+                if (isCursor == false)
+                {
+                    Vector3 pos = new Vector2(0.0f, 0.1f) * transform.up.y; // 駒のずれ
+                    transform.position += pos;                              // 少しずらす
+                }
 
                 // ボールを持っている場合
                 if (BallController.pieceHoldingBall == selectingPiece)
@@ -265,8 +273,8 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                     }
                 }
 
-                // 持ち駒を選択した場合
-                if (pc.IsInHand())
+                // 持ち駒を選択した場合，かつカーソルオンのとき
+                if (pc.IsInHand() && isCursor)
                 {
                     // 一時的に持ち駒数の表示を減らす
                     selectingPiece.GetComponent<Piece>().CountDown();

@@ -273,25 +273,28 @@ public class PieceController : MonoBehaviour
             transform.SetParent(null);                  // 親をnullにする
             GameManager.DisplayPieceCount(gameObject);  // 駒のカウントを表示
 
-            // 打ち歩詰めか判定
-            if (pieceType == PieceType.pawn)
+            if (gameManager.isCheckOn)
             {
-                transform.position = new Vector2(newXInt, newYInt); // 打った場所に移動
-
-                if (gameManager.IsCheckmate())
+                // 打ち歩詰めか判定
+                if (pieceType == PieceType.pawn)
                 {
-                    // 歩を打って詰んだら打った方の負け
-                    Debug.Log("打ち歩詰めです！");
-                    string winningPlayer;
-                    if (GameManager.nowPlayer == firstPlayerLayer)
+                    transform.position = new Vector2(newXInt, newYInt); // 打った場所に移動
+
+                    if (gameManager.IsCheckmate())
                     {
-                        winningPlayer = secondPlayerLayer;
+                        // 歩を打って詰んだら打った方の負け
+                        Debug.Log("打ち歩詰めです！");
+                        string winningPlayer;
+                        if (GameManager.nowPlayer == firstPlayerLayer)
+                        {
+                            winningPlayer = secondPlayerLayer;
+                        }
+                        else
+                        {
+                            winningPlayer = firstPlayerLayer;
+                        }
+                        gameManager.GameOver(winningPlayer);    // ゲーム終了
                     }
-                    else
-                    {
-                        winningPlayer = firstPlayerLayer;
-                    }
-                    gameManager.GameOver(winningPlayer);    // ゲーム終了
                 }
             }
         }
@@ -446,7 +449,7 @@ public class PieceController : MonoBehaviour
                     }
                 }
 
-                if (!isNowUpdate) // 更新中の場合は再帰回避のためスキップ
+                if (!isNowUpdate && gameManager.isCheckOn) // 更新中の場合は再帰回避のためスキップ
                 {
 
                     // 動かすと詰みならその位置には動かせない

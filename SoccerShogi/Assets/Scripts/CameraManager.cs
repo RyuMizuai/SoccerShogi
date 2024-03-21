@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CameraManager : MonoBehaviour
@@ -8,7 +6,7 @@ public class CameraManager : MonoBehaviour
     {
         Vector3 pos = BoardManager.centerPos;
         // ƒJƒƒ‰‚Ì‰ŠúˆÊ’u
-        transform.position = new Vector3(pos.x, pos.y, -11);
+        transform.position = new Vector3(pos.x, pos.y + 0.2f, -11);
     }
 
 }

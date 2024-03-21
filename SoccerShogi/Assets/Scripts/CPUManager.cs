@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,6 +10,7 @@ public class CPUManager : MonoBehaviour
     private void Start()
     {
         gameManager = GameManager.gameManager;
+        CPUPos.Clear(); // Listを空にする
     }
 
     public static void MovingCPU()
@@ -54,12 +54,9 @@ public class CPUManager : MonoBehaviour
                     }
                     break;
             }
-            
         }
-
         CPUPos.Clear(); // Listを空にする
     }
-
 }
 
 // 駒のオブジェクトと動かせるマスの座標を持つクラス

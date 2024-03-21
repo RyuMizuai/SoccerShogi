@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,7 +23,7 @@ public class TutorialScreen : MonoBehaviour
     private int activePageIndex = 0;    // 現在表示しているページ
 
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
         tutorialScreen = GetComponent<TutorialScreen>();
         tutorialPanel.SetActive(false);
@@ -76,12 +74,15 @@ public class TutorialScreen : MonoBehaviour
             backButton.interactable = true;
         }
 
+        // 最後のページなら次へボタンの代わりに閉じるボタンを表示する
         if (activePageIndex == pageCount - 1)
         {
+            nextButton.gameObject.SetActive(false);
             closeButton.SetActive(true);
         }
         else
         {
+            nextButton.gameObject.SetActive(true);
             closeButton.SetActive(false);
         }
     }

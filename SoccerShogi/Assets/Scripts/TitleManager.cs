@@ -4,7 +4,7 @@ using System.Collections;
 
 public class TitleManager : MonoBehaviour
 {
-    private static string titleScene = "Title";
+    private static string titleScene = "Start";
     private static string settingScene = "Setting";
     private static string allCoatScene = "AllCoat";
     private string harfCoatScene = "";

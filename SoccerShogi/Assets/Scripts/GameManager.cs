@@ -1,9 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 
 public class GameManager : MonoBehaviour
@@ -45,7 +45,7 @@ public class GameManager : MonoBehaviour
 
     [SerializeField]
     private TMP_Text scoreText;             // スコアのTextオブジェクト
-    private static string scoreString = "0 - 0";      // スコアのText
+    private static string scoreString = "0 - 0";             // スコアのText
 
     [SerializeField]
     private TMP_Text firstPlayerNameText;   // 先手の名前
@@ -81,7 +81,9 @@ public class GameManager : MonoBehaviour
     private static int firstPlayerScore = 0;
     private static int secondPlayerScore = 0;
 
-    private bool isCPU = true;  // 相手がコンピューターかどうか
+    public bool isCPU = true;       // 相手がコンピューターかどうか
+
+    public bool isCheckOn = false;  // 詰み機能の有無
 
 
     // 駒の名前の対応表
@@ -102,7 +104,7 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        gameManager = this;    // static変数に自分を保存する        
+        gameManager = this;    // static変数に自分を保存する
     }
 
     private void Start()
@@ -113,14 +115,14 @@ public class GameManager : MonoBehaviour
         messageText.gameObject.SetActive(false);
         optionPanel.SetActive(false);
 
-        scoreText.text = scoreString;                       // スコアを表示
+        scoreText.text = scoreString;                       // スコアの更新
         boardManager = GetComponent<BoardManager>();        // BoardManager
         nowSceneName = SceneManager.GetActiveScene().name;  // 現在のシーン名
 
         StartCoroutine(InitCoroutine());                    // ゲームの初期設定
 
-        firstPlayerNameText.text = SetText.firstPlayerName;
-        secoondPlayerNameText.text = SetText.secondPlayerName;
+        firstPlayerNameText.text = SettingSript.firstPlayerName;
+        secoondPlayerNameText.text = SettingSript.secondPlayerName;
     }
 
     private IEnumerator InitCoroutine()
@@ -140,9 +142,9 @@ public class GameManager : MonoBehaviour
 
         GoalManager.SetGoalPos();                               // ゴールの座標をセット
 
-        isFinishInitialize = true;                              // 初期化完了
-
         gameState = "Playing";                                  // ゲーム状態
+
+        isFinishInitialize = true;                              // 初期化完了
     }
     
     // 現在の座標と回転させる向き，回転軸の座標を受け取って，回転後の座標を返す
@@ -240,14 +242,14 @@ public class GameManager : MonoBehaviour
     }
 
     // アクションやめる
-    public void CancelAction(GameObject obj)
+    public void CancelAction(GameObject pieceObj)
     {
         // フラグを下ろす
         isPassing = false;
         isDribbling = false;
 
         // 駒とボールの座標を元の位置に戻す
-        obj.transform.position = ClickObject.selectingPiecePos;
+        pieceObj.transform.position = ClickObject.selectingPiecePos;
 
         // 保持されている場合
         if (BallController.pieceHoldingBall != null)
@@ -287,7 +289,7 @@ public class GameManager : MonoBehaviour
         actionButtonPanel.SetActive(false);
     }
 
-    // リトライボタン
+    // リトライボタン(消した)
     public void RetryButton()
     {
         SceneManager.LoadScene(nowSceneName);   // 現在のシーンを読み込む
@@ -488,6 +490,15 @@ public class GameManager : MonoBehaviour
             yield return StartCoroutine(Goal(goalName));
         }
 
+        // ボール奪取チェック
+
+        // ボール保持中の駒がnullならDefault，nullでなければその駒のレイヤーを代入する
+        string layer =  LayerMask.LayerToName(BallController.pieceHoldingBall?.layer ?? 0);
+        if (layer == secondPlayerLayer)
+        {
+            StartCoroutine(BallStolen());
+        }
+
         // 駒を解除
         ClickObject.selectingPiece = null;
         ClickObject.oldSelectingPiece = null;
@@ -509,13 +520,16 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        isInCheck = IsCheck(nowPlayer); // 王手情報更新
-
-        // 王手チェック
-        if (isInCheck)
+        if (isCheckOn)
         {
-            pieceInCheckList = GetPiecesInCheck();      // 王手中の駒
-            intersectingPosList = GetIntersectingPos(); // 合駒の座標
+            isInCheck = IsCheck(nowPlayer); // 王手情報更新
+
+            // 王手チェック
+            if (isInCheck)
+            {
+                pieceInCheckList = GetPiecesInCheck();      // 王手中の駒
+                intersectingPosList = GetIntersectingPos(); // 合駒の座標
+            }
         }
 
         // 相手の駒のPoint更新
@@ -538,14 +552,16 @@ public class GameManager : MonoBehaviour
             }
         }
 
-
-        // 詰みチェック
-        if (isInCheck)
+        if (isCheckOn)
         {
-            // 相手がどこも動かせなかったら詰み
-            if (IsCheckmate())
+            // 詰みチェック
+            if (isInCheck)
             {
-                StartCoroutine(GameOver(nowPlayer));    // 現在のプレイヤーの勝ち
+                // 相手がどこも動かせなかったら詰み
+                if (IsCheckmate())
+                {
+                    StartCoroutine(GameOver(nowPlayer));    // 現在のプレイヤーの勝ち
+                }
             }
         }
 
@@ -563,9 +579,11 @@ public class GameManager : MonoBehaviour
         if (isCPU && nowPlayer == secondPlayerLayer)
         {
             yield return new WaitForSeconds(1.0f);
-            CPUManager.MovingCPU();
+            if (gameState == "Playing")
+            {
+                CPUManager.MovingCPU();
+            }
         }
-
     }
 
     // ターン終了
@@ -605,20 +623,26 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            goalMessage = typeKanji + "のゴール！";
+            goalMessage = typeKanji + "の\nゴール！";
         }
 
         // スコアTextを更新
-        string updateScoreText = firstPlayerScore.ToString() + " - " + secondPlayerScore.ToString();
-        scoreString = updateScoreText;
+        scoreString = firstPlayerScore.ToString() + " - " + secondPlayerScore.ToString();
+        scoreText.text = scoreString;   // Textを更新
 
         // ゴールメッセージを表示
         messageText.text = goalMessage;
         messageText.gameObject.SetActive(true);
 
+        yield return new WaitForSeconds(2.0f);  // 2秒待つ
 
-        yield return new WaitForSeconds(2.0f);      // 2秒待つ
-        SceneManager.LoadScene(nowSceneName);       // 盤面を初期化する
+        // ゲーム終了条件を満たしていたらコルーチンを止める
+        if (IsGameOver())
+        {
+            yield break;
+        }
+
+        SceneManager.LoadScene(nowSceneName);   // 盤面を初期化する
        
         
         // ボールを適切な位置に初期化
@@ -633,10 +657,14 @@ public class GameManager : MonoBehaviour
         StartCoroutine(SoundManager.soundManager.MakeGameEndSound());
 
         // 勝ったプレイヤーに応じてメッセージをTextに出力
-        string message = (winningPlayer == firstPlayerLayer) ? "あなたの勝ち！" : "あなたの負け!";
+        string message = (winningPlayer == firstPlayerLayer) ? "あなたの\n勝ち！" : "あなたの\n負け！";
         
         messageText.text = message;
         messageText.gameObject.SetActive(true);
+
+        firstPlayerScore = 0;
+        secondPlayerScore = 0;
+        scoreString = "0 - 0";
 
         yield return new WaitForSeconds(3.0f);  // 3秒待つ
         TitleManager.LoadTitleScene();          // スタートシーンを読み込む
@@ -645,14 +673,69 @@ public class GameManager : MonoBehaviour
     // 投了ボタン
     public void GiveUpButton()
     {
-        if (nowPlayer == firstPlayerLayer)
+        StartCoroutine(GameOver(secondPlayerLayer));
+
+        /*if (nowPlayer == firstPlayerLayer)
         {
             StartCoroutine(GameOver(secondPlayerLayer));
         }
         else
         {
             StartCoroutine(GameOver(firstPlayerLayer));
+        }*/
+    }
+
+    // ボールを奪われた(ずっと攻め側の場合のみ記述してる)
+    public IEnumerator BallStolen()
+    {
+        gameState = "Stolen";
+
+        SoundManager.soundManager.MakeCheerSound();  // ゴールの笛を鳴らす
+
+        if (isCPU)
+        {
+            secondPlayerScore++;
         }
+
+        // メッセージをTextに出力
+        string message = "ボールを\n奪われた！";
+
+        messageText.text = message;
+        messageText.gameObject.SetActive(true);
+
+        scoreString = firstPlayerScore.ToString() + " - " + secondPlayerScore.ToString();
+        scoreText.text = scoreString;   // Textを更新
+
+        yield return new WaitForSeconds(2.0f);  // 2秒待つ
+
+        // ゲーム終了条件を満たしていたらコルーチンを止める
+        if (IsGameOver())
+        {
+            yield break;
+        }
+
+        SceneManager.LoadScene(nowSceneName);   // 盤面を初期化する
+       
+        
+        // ボールを適切な位置に初期化
+
+    }
+
+    // ゲーム終了か判定する
+    public bool IsGameOver()
+    {
+        if (firstPlayerScore == SettingSript.maxScore)
+        {
+            StartCoroutine(GameOver(firstPlayerLayer));
+            return true;
+        }
+        else if (secondPlayerScore == SettingSript.maxScore)
+        {
+            StartCoroutine(GameOver(secondPlayerLayer));
+            return true;
+        }
+
+        return false;
     }
 
 }
