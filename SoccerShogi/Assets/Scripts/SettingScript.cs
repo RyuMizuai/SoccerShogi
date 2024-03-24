@@ -28,7 +28,7 @@ public class SettingSript : MonoBehaviour
     // 色
     Color32 white = new Color32(255, 255, 255, 255);    // 白
     Color32 gray = new Color32(200, 200, 200, 255);     // グレー
-    Color32 pressedColor = new Color32(255, 230, 150, 255);    // ベージュ
+    Color32 pressedColor = new Color32(255, 230, 170, 255);    // 押したときの色
 
 
     // 難易度設定ボタン

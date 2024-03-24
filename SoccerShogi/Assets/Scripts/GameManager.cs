@@ -597,6 +597,8 @@ public class GameManager : MonoBehaviour
     {
         gameState = "Goal";
 
+        yield return new WaitForSeconds(0.5f);      // 少し待機
+
         SoundManager.soundManager.MakeGoalSound();  // ゴールの笛を鳴らす
 
         bool isOwnGoal = (goalName == nowPlayer);   // オウンゴールかどうか

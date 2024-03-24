@@ -8,7 +8,8 @@ public class SoundManager : MonoBehaviour
     public AudioClip longWhistleSound;  // 長い笛の音
     public AudioClip goalSound;         // ゴールの声
     public AudioClip cheerSound;        // 歓声
-    public AudioClip passSound;         // ボールを蹴る音
+    public AudioClip passSound;         // パスの音
+    public AudioClip shootSound;         // シュートの音
     public AudioClip brightSelectSound; // 明るい選択音
     public AudioClip sadSelectSound;    // 暗い選択音
 
@@ -69,10 +70,16 @@ public class SoundManager : MonoBehaviour
         audioSource.PlayOneShot(cheerSound);
     }
 
-    // パス時の音
+    // パスの音
     public void MakePassSound()
     {
         audioSource.PlayOneShot(passSound);
+    }
+
+    // シュートの音
+    public void MakeShootSound()
+    {
+        audioSource.PlayOneShot(shootSound);
     }
 
     // 選択時の音1

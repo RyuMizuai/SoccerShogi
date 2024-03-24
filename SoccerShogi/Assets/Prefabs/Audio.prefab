@@ -147,5 +147,6 @@ MonoBehaviour:
   goalSound: {fileID: 8300000, guid: cea1899a1d245d14caf80e95e6f1660f, type: 3}
   cheerSound: {fileID: 8300000, guid: dfd165b9a3aebe84f93ac1fb79ebd256, type: 3}
   passSound: {fileID: 8300000, guid: be0b628bf1d0f4b429a3b5e529e9bad5, type: 3}
+  shootSound: {fileID: 8300000, guid: 84fb53bf49394c44bb9d74dc16b51871, type: 3}
   brightSelectSound: {fileID: 8300000, guid: 815533d892c8c2a4cbc6dff29b66fdb7, type: 3}
   sadSelectSound: {fileID: 8300000, guid: ed69f2d46347e864ba7cf17ed498b22d, type: 3}

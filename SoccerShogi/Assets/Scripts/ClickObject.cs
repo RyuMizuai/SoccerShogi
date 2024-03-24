@@ -114,12 +114,25 @@ public class ClickObject : MonoBehaviour, IPointerClickHandler
                     // パス
                     if (GameManager.isPassing)
                     {
-                        SoundManager.soundManager.MakePassSound();  // パスの効果音
                         selectingPiece.transform.DetachChildren();  // 子のボールを削除
+
                         int posX = Mathf.RoundToInt(obj.transform.position.x);
                         int posY = Mathf.RoundToInt(obj.transform.position.y);
                         Vector2Int newBallPos = new Vector2Int(posX, posY);
                         ballObject.transform.position = (Vector2)newBallPos;
+
+                        // ゴールチェック
+                        (bool isGoal, string goalName) = GoalManager.GoalExistsAtPos(newBallPos);
+
+                        if (isGoal)
+                        {
+                            SoundManager.soundManager.MakeShootSound(); // シュートの効果音
+                        }
+                        else
+                        {
+                            SoundManager.soundManager.MakePassSound();  // パスの効果音
+                        }
+
                         BallController.pieceHoldingBall = null; // ボール保持をnull
                         GameManager.isPassing = false;          // パス中オフ
 
